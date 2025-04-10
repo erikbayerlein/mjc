@@ -8,6 +8,9 @@ target/
 .idea/jarRepositories.xml
 .idea/compiler.xml
 .idea/libraries/
+.idea/discord.xml
+.idea/aws.xml
+
 *.iws
 *.iml
 *.ipr
