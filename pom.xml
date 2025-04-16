@@ -55,6 +55,12 @@
                         <goals>
                             <goal>antlr4</goal>
                         </goals>
+                        <configuration>
+                            <sourceDirectory>src/main/antlr/</sourceDirectory>
+                            <outputDirectory>target/generated-sources/antlr/</outputDirectory>
+                            <listener>true</listener>
+                            <visitor>true</visitor>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
