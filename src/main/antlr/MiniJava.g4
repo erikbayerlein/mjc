@@ -1,5 +1,3 @@
-/** Mini-Java ANTLR4 grammar **/
-
 grammar MiniJava;
 
 @header {
@@ -9,19 +7,22 @@ package org.mjc.antlr;
 goal: program EOF;
 program: mainClass ( classDeclaration )*;
 
-mainClass: CLASS IDENTIFIER LSQUIRLY PUBLIC STATIC VOID MAIN LPAREN STRING LBRACKET RBRACKET IDENTIFIER RPAREN LSQUIRLY stmList RSQUIRLY RSQUIRLY;
-classDeclaration: CLASS IDENTIFIER ( EXTENDS IDENTIFIER )? LSQUIRLY varDeclList methodDeclList RSQUIRLY #classDecl;
-
+mainClass: CLASS IDENTIFIER LSQUIRLY PUBLIC STATIC VOID MAIN LPAREN STRING LBRACKET RBRACKET IDENTIFIER RPAREN LSQUIRLY statement RSQUIRLY RSQUIRLY;
+classDeclaration: CLASS IDENTIFIER LSQUIRLY varDeclList methodDeclList RSQUIRLY #classDecl
+| CLASS IDENTIFIER EXTENDS IDENTIFIER LSQUIRLY varDeclList methodDeclList RSQUIRLY #classDecl
+;
 
 methodDeclList: ( methodDeclaration )*;
 varDeclList: ( varDeclaration )*;
-formalList: ( formal ( COMMA formal )* )?;
-stmList: ( statement )*;
 
 varDeclaration: type IDENTIFIER SEMICOLON #varDecl;
 methodDeclaration: PUBLIC type IDENTIFIER LPAREN formalList RPAREN LSQUIRLY varDeclList stmList RETURN expression SEMICOLON RSQUIRLY #methodDecl;
 
-formal: type IDENTIFIER;
+formalList:  type IDENTIFIER ( formalRest )*
+|
+;
+
+formalRest: COMMA type IDENTIFIER;
 
 type:
   INT LBRACKET RBRACKET #typeIntArray
@@ -31,7 +32,7 @@ type:
 ;
 
 statement:
-  LSQUIRLY stmList RSQUIRLY #stmBlock
+  LSQUIRLY ( statement )* RSQUIRLY #stmBlock
 | IF LPAREN expression RPAREN statement ELSE statement #stmIf
 | WHILE LPAREN expression RPAREN statement #stmWhile
 | SOUT LPAREN expression RPAREN SEMICOLON #stmPrint
@@ -40,26 +41,30 @@ statement:
 ;
 
 expression:
-  expression LBRACKET expression RBRACKET #expArrayLookup
-| expression DOT LENGHT #expArrayLength
-| expression DOT IDENTIFIER LPAREN callArguments RPAREN #expCall
-| BANG expression #expNot
-| NEW INT LBRACKET expression RBRACKET #expNewArray
-| NEW IDENTIFIER LPAREN RPAREN #expNewObject
-| expression STAR expression #expTimes
+  expression STAR expression #expTimes
 | expression PLUS expression #expPlus
 | expression MINUS expression #expMinus
 | expression LT expression #expLessThan
 | expression AND expression #expAnd
+| expression LBRACKET expression RBRACKET #expArrayLookup
+| expression DOT LENGTH #expArrayLength
+| expression DOT IDENTIFIER LPAREN expList RPAREN #expCall
 | INTEGER_LITERAL #expIntegerLiteral
 | TRUE_LITERAL #expTrue
 | FALSE_LITERAL #expFalse
 | IDENTIFIER #expIdentifierExp
 | THIS #expThis
+| NEW INT LBRACKET expression RBRACKET #expNewArray
+| NEW IDENTIFIER LPAREN RPAREN #expNewObject
+| BANG expression #expNot
 | LPAREN expression RPAREN #expBracket
 ;
 
-callArguments: ( expression ( COMMA expression )* )?;
+expList: expression ( expRest )*
+|
+;
+
+expRest: COMMA expression;
 
 // tokens
 LPAREN: '(';
@@ -89,7 +94,7 @@ NEW: 'new';
 THIS: 'this';
 RETURN: 'return';
 STRING: 'String';
-LENGHT: 'length';
+LENGTH: 'length';
 
 
 // operators
