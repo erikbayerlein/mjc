@@ -16,7 +16,7 @@ methodDeclList: ( methodDeclaration )*;
 varDeclList: ( varDeclaration )*;
 
 varDeclaration: type IDENTIFIER SEMICOLON #varDecl;
-methodDeclaration: PUBLIC type IDENTIFIER LPAREN formalList RPAREN LSQUIRLY varDeclList stmList RETURN expression SEMICOLON RSQUIRLY #methodDecl;
+methodDeclaration: PUBLIC type IDENTIFIER LPAREN formalList RPAREN LSQUIRLY varDeclList statement RETURN expression SEMICOLON RSQUIRLY #methodDecl;
 
 formalList:  type IDENTIFIER ( formalRest )*
 |
