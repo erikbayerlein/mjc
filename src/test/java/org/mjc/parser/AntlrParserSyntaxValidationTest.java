@@ -13,7 +13,7 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("AntlrParser Syntax Validation Tests")
-class AntlrSyntaxValidationParserTest {
+class AntlrParserSyntaxValidationTest {
 
     private AntlrParser parser;
     private final String testFilePath = "src/test/resources/testFiles/";
