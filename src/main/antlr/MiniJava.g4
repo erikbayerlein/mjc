@@ -7,21 +7,14 @@ package org.mjc.antlr;
 goal: program EOF;
 program: mainClass ( classDeclaration )*;
 
-mainClass: CLASS IDENTIFIER LSQUIRLY PUBLIC STATIC VOID MAIN LPAREN STRING LBRACKET RBRACKET IDENTIFIER RPAREN LSQUIRLY statement RSQUIRLY RSQUIRLY;
-classDeclaration: CLASS IDENTIFIER LSQUIRLY varDeclList methodDeclList RSQUIRLY #classDecl
-| CLASS IDENTIFIER EXTENDS IDENTIFIER LSQUIRLY varDeclList methodDeclList RSQUIRLY #classDecl
-;
-
-methodDeclList: ( methodDeclaration )*;
-varDeclList: ( varDeclaration )*;
+mainClass: CLASS IDENTIFIER LSQUIRLY PUBLIC STATIC VOID MAIN LPAREN STRING LBRACKET RBRACKET IDENTIFIER RPAREN LSQUIRLY ( statement )? RSQUIRLY RSQUIRLY;
+classDeclaration: CLASS IDENTIFIER ( EXTENDS IDENTIFIER )? LSQUIRLY ( varDeclaration )* ( methodDeclaration )* RSQUIRLY #classDecl;
 
 varDeclaration: type IDENTIFIER SEMICOLON #varDecl;
-methodDeclaration: PUBLIC type IDENTIFIER LPAREN formalList RPAREN LSQUIRLY varDeclList statement RETURN expression SEMICOLON RSQUIRLY #methodDecl;
+methodDeclaration: PUBLIC type IDENTIFIER LPAREN formalList RPAREN LSQUIRLY ( varDeclaration )* ( statement )* RETURN expression SEMICOLON RSQUIRLY #methodDecl;
 
-formalList:  type IDENTIFIER ( formalRest )*
-|
-;
 
+formalList: ( type IDENTIFIER ( formalRest )* )?;
 formalRest: COMMA type IDENTIFIER;
 
 type:
@@ -60,10 +53,7 @@ expression:
 | LPAREN expression RPAREN #expBracket
 ;
 
-expList: expression ( expRest )*
-|
-;
-
+expList: ( expression ( expRest )* )?;
 expRest: COMMA expression;
 
 // tokens
@@ -117,4 +107,4 @@ IDENTIFIER: [_a-zA-Z] [_a-zA-Z0-9]*;
 COMMENT: (SINGLELINECOMMENT | MULTILINECOMMENT) -> skip;
 fragment SINGLELINECOMMENT: ('//' ~('\n')*);
 fragment MULTILINECOMMENT: '/*' .*? '*/';
-WS: [ \t\r\n] -> skip;
+WS: [ \t\r\n\f] -> skip;
