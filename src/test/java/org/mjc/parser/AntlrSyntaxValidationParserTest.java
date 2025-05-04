@@ -1,5 +1,6 @@
 package org.mjc.parser;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,11 +15,17 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("AntlrParser Syntax Validation Tests")
 class AntlrSyntaxValidationParserTest {
 
+    private AntlrParser parser;
+
+    @BeforeEach
+    void setUp() {
+        parser = new AntlrParser();
+    }
+
     private void validateSyntaxFromFile(String filePath) throws IOException {
         String content = Files.readString(Path.of(filePath));
         InputStream inputStream = new ByteArrayInputStream(content.getBytes());
 
-        AntlrParser parser = new AntlrParser();
         boolean result = parser.validateSyntax(inputStream);
 
         assertTrue(result, "The program in " + filePath + " should have valid syntax.");
@@ -30,7 +37,6 @@ class AntlrSyntaxValidationParserTest {
         String validInput = "class Main{ public static void main(String[] a) { }}";
         InputStream inputStream = new ByteArrayInputStream(validInput.getBytes());
 
-        AntlrParser parser = new AntlrParser();
         boolean result = parser.validateSyntax(inputStream);
 
         assertTrue(result);
@@ -42,7 +48,6 @@ class AntlrSyntaxValidationParserTest {
         String invalidInput = "class Main { public static void main(String[] args) {";
         InputStream inputStream = new ByteArrayInputStream(invalidInput.getBytes());
 
-        AntlrParser parser = new AntlrParser();
         boolean result = parser.validateSyntax(inputStream);
 
         assertFalse(result);
@@ -54,7 +59,6 @@ class AntlrSyntaxValidationParserTest {
         String emptyInput = "";
         InputStream inputStream = new ByteArrayInputStream(emptyInput.getBytes());
 
-        AntlrParser parser = new AntlrParser();
         boolean result = parser.validateSyntax(inputStream);
 
         assertFalse(result);
