@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class AntlrSyntaxValidationParserTest {
 
     private AntlrParser parser;
+    private final String testFilePath = "src/test/resources/testFiles/";
 
     @BeforeEach
     void setUp() {
@@ -67,48 +68,48 @@ class AntlrSyntaxValidationParserTest {
     @Test
     @DisplayName("BinaryTree program should have valid syntax")
     void validateSyntaxWithBinaryTreeProgram() throws IOException {
-        validateSyntaxFromFile("src/test/resources/testFiles/BinaryTree.java");
+        validateSyntaxFromFile(testFilePath + "BinaryTree.java");
     }
 
     @Test
     @DisplayName("BinarySearch program should have valid syntax")
     void validateSyntaxWithBinarySearchProgram() throws IOException {
-        validateSyntaxFromFile("src/test/resources/testFiles/BinarySearch.java");
+        validateSyntaxFromFile(testFilePath + "BinarySearch.java");
     }
 
     @Test
     @DisplayName("BubbleSort program should have valid syntax")
     void validateSyntaxWithBubbleSortProgram() throws IOException {
-        validateSyntaxFromFile("src/test/resources/testFiles/BubbleSort.java");
+        validateSyntaxFromFile(testFilePath + "BubbleSort.java");
     }
 
     @Test
     @DisplayName("Factorial program should have valid syntax")
     void validateSyntaxWithFactorialProgram() throws IOException {
-        validateSyntaxFromFile("src/test/resources/testFiles/Factorial.java");
+        validateSyntaxFromFile(testFilePath + "Factorial.java");
     }
 
     @Test
     @DisplayName("LinearSearch program should have valid syntax")
     void validateSyntaxWithLinearSearchProgram() throws IOException {
-        validateSyntaxFromFile("src/test/resources/testFiles/LinearSearch.java");
+        validateSyntaxFromFile(testFilePath + "LinearSearch.java");
     }
 
     @Test
     @DisplayName("LinkedList program should have valid syntax")
     void validateSyntaxWithLinkedListProgram() throws IOException {
-        validateSyntaxFromFile("src/test/resources/testFiles/LinkedList.java");
+        validateSyntaxFromFile(testFilePath + "LinkedList.java");
     }
 
     @Test
     @DisplayName("QuickSort program should have valid syntax")
     void validateSyntaxWithQuickSortProgram() throws IOException {
-        validateSyntaxFromFile("src/test/resources/testFiles/QuickSort.java");
+        validateSyntaxFromFile(testFilePath + "QuickSort.java");
     }
 
     @Test
     @DisplayName("TreeVisitor program should have valid syntax")
     void validateSyntaxWithTreeVisitorProgram() throws IOException {
-        validateSyntaxFromFile("src/test/resources/testFiles/TreeVisitor.java");
+        validateSyntaxFromFile(testFilePath + "TreeVisitor.java");
     }
 }
