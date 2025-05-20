@@ -9,7 +9,7 @@ import org.mjc.visitor.Visitor;
 @Data
 @AllArgsConstructor
 public class Not extends Expression {
-	private Expression e;
+	private Expression expr;
 
 	@Override
 	public <T> T accept(Visitor<T> v) {

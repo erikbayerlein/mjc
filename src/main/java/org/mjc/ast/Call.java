@@ -11,7 +11,7 @@ import org.mjc.visitor.Visitor;
 @Builder
 @AllArgsConstructor
 public class Call extends Expression {
-	private Expression owner;
+	private Expression receiver;
 	private Identifier method;
 	@Builder.Default
 	private ExpressionList expressionList = new ExpressionList();

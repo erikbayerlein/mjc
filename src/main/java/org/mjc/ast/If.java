@@ -13,9 +13,9 @@ import org.mjc.visitor.Visitor;
 public class If extends Statement {
 	private Expression condition;
 	@Builder.Default
-	private Statement thenBranch = new Block(new StatementList());
+	private Statement thenStmt;
 	@Builder.Default
-	private Statement elseBranch = new Block(new StatementList());
+	private Statement elseStmt;
 
 	@Override
 	public <T> T accept(Visitor<T> v) {

@@ -6,17 +6,19 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.mjc.visitor.Visitor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @EqualsAndHashCode(callSuper = false)
 @Data
 @Builder
 @AllArgsConstructor
 public class ClassDeclExtends extends ClassDecl {
 	private Identifier className;
-	private Identifier parent;
-	@Builder.Default
-	private VarDeclList fields = new VarDeclList();
-	@Builder.Default
-	private MethodDeclList methods = new MethodDeclList();
+	private Identifier superClassName;
+	private ArrayList<VarDecl> varList;
+	private ArrayList<MethodDecl> methodList;
+
 
 	@Override
 	public <T> T accept(Visitor<T> v) {

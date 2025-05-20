@@ -11,7 +11,7 @@ import org.mjc.visitor.Visitor;
 @Builder
 @AllArgsConstructor
 public class NewObject extends Expression {
-	private Identifier identifier;
+	private Identifier className;
 
 	@Override
 	public <T> T accept(Visitor<T> v) {

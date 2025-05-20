@@ -11,8 +11,8 @@ import org.mjc.visitor.Visitor;
 @Builder
 @AllArgsConstructor
 public class Assign extends Statement {
-	private Identifier identifier;
-	private Expression value;
+	private Identifier name;
+	private Expression expr;
 
 	@Override
 	public <T> T accept(Visitor<T> v) {

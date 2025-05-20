@@ -11,7 +11,7 @@ import org.mjc.visitor.Visitor;
 @AllArgsConstructor
 @ToString
 public class IdentifierType extends Type {
-	private String s;
+	private String name;
 
 	@Override
 	public <T> T accept(Visitor<T> v) {

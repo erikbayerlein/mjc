@@ -13,7 +13,7 @@ import org.mjc.visitor.Visitor;
 public class While extends Statement {
 	private Expression condition;
 	@Builder.Default
-	private Statement body = new Block(new StatementList());
+	private Statement body;
 
 	@Override
 	public <T> T accept(Visitor<T> v) {

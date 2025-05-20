@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.example.visitor.Visitor;
+import org.mjc.visitor.Visitor;
 
 @EqualsAndHashCode(callSuper = false)
 @Data

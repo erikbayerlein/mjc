@@ -5,6 +5,7 @@ import org.mjc.antlr.MiniJavaParser;
 import org.mjc.ast.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Stack;
 
 public class ASTGenerator extends org.mjc.antlr.MiniJavaBaseListener {
@@ -12,9 +13,12 @@ public class ASTGenerator extends org.mjc.antlr.MiniJavaBaseListener {
 	private Program prog;
 	private MainClass mc;
 	private ClassDeclList cdl;
+
 	private Stack<MethodDeclList> mdlStack;
+	private Stack<ArrayList<MethodDecl>> methodDecls;
 	private Stack<FormalList> flclStack;
 	private Stack<VarDeclList> vdlStack;
+	private Stack<ArrayList<VarDecl>> varDecls;
 	private Stack<Type> typeStack;
 	private Stack<Statement> stmStack;
 	private Stack<Stack<Statement>> stmStackStack;
@@ -22,6 +26,8 @@ public class ASTGenerator extends org.mjc.antlr.MiniJavaBaseListener {
 	private Stack<Expression> expStack;
 	private Stack<Stack<Expression>> expStackStack;
 	private Stack<ExpressionList> expListStack;
+	private Stack<ArrayList<Statement>> statement;
+	private Stack<Object> stack;
 
 	public ASTGenerator() {
 		super();
@@ -37,10 +43,11 @@ public class ASTGenerator extends org.mjc.antlr.MiniJavaBaseListener {
 
 	public void enterProgram(MiniJavaParser.ProgramContext ctx) {
 		mdlStack = new Stack<>();
+		methodDecls = new Stack<>();
 		flclStack = new Stack<>();
 		vdlStack = new Stack<>();
+		varDecls = new Stack<>();
 		typeStack = new Stack<>();
-
 		expStack = new Stack<>();
 		expStackStack = new Stack<>();
 		expListStack = new Stack<>();
@@ -48,238 +55,257 @@ public class ASTGenerator extends org.mjc.antlr.MiniJavaBaseListener {
 		stmStack = new Stack<>();
 		stmStackStack = new Stack<>();
 		stmListStack = new Stack<>();
-
+		statement = new Stack<>();
+		stack = new Stack<>();
 		cdl = new ClassDeclList();
 	}
 
 	public void exitProgram(MiniJavaParser.ProgramContext ctx) {
-		prog = new Program(mc, cdl);
+		ArrayList<ClassDecl> classDecls = new ArrayList<>();
+		for (int i = 0; i < ctx.classDeclaration().size(); i++) {
+			classDecls.add(0, (ClassDecl) stack.pop());
+		}
+		MainClass mainClass = (MainClass) stack.pop();
+		prog = new Program(mainClass, classDecls);
 	}
 
 	public void exitMainClass(MiniJavaParser.MainClassContext ctx) {
-		StatementList stmList = stmListStack.pop();
-		Identifier className = getId(ctx, 1);
-		Identifier args = new Identifier(ctx.getChild(11).getText());
-		mc = new MainClass(className, args, stmList);
+		Statement statement = ctx.statement() != null ? (Statement) stack.pop() : null;
+		Identifier className = new Identifier(ctx.IDENTIFIER(0).getText());
+		Identifier argName = new Identifier(ctx.IDENTIFIER(1).getText());
+		stack.push(new MainClass(className, argName, statement));
 	}
 
 	public void exitClassDecl(MiniJavaParser.ClassDeclContext ctx) {
-		Identifier className = getId(ctx, 1);
-		VarDeclList vdl = vdlStack.pop();
-		MethodDeclList mdl = mdlStack.pop();
-		if (ctx.getChild(2).getText().equals("extends")) {
-			Identifier parentClass = new Identifier(ctx.getChild(3).getText());
-			cdl.addClassDecl(new ClassDeclExtends(className, parentClass, vdl, mdl));
-		} else {
-			cdl.addClassDecl(new ClassDeclSimple(className, vdl, mdl));
-		}
-	}
+		Identifier className = new Identifier(ctx.IDENTIFIER(0).getText());
+		Identifier superClass = ctx.EXTENDS() != null ? new Identifier(ctx.IDENTIFIER(1).getText()) : null;
 
-	public void enterMethodDeclList(MiniJavaParser.MethodDeclListContext ctx) {
-		mdlStack.push(new MethodDeclList());
+		ArrayList<MethodDecl> methods = new ArrayList<>();
+		for (int i = 0; i < ctx.methodDeclaration().size(); i++) {
+			methods.add(0, (MethodDecl) stack.pop());
+		}
+
+		ArrayList<VarDecl> vars = new ArrayList<>();
+		for (int i = 0; i < ctx.varDeclaration().size(); i++) {
+			vars.add(0, (VarDecl) stack.pop());
+		}
+
+		ClassDecl decl = (superClass != null)
+				? new ClassDeclExtends(className, superClass, vars, methods)
+				: new ClassDeclSimple(className, vars, methods);
+
+		stack.push(decl);
 	}
 
 	public void exitMethodDecl(MiniJavaParser.MethodDeclContext ctx) {
-		Type t = typeStack.pop();
-		Identifier id = getId(ctx, 2);
-		FormalList flcl = flclStack.pop();
-		VarDeclList vdl = vdlStack.pop();
-		StatementList stml = stmListStack.pop();
-		Expression exp = expStack.pop();
-		mdlStack.peek().addMethodDecl(new MethodDecl(t, id.getS(), flcl, vdl, stml, exp));
+		ArrayList<Statement> statements = new ArrayList<>();
+		for (int i = 0; i < ctx.statement().size(); i++) {
+			statements.add(0, (Statement) stack.pop());
+		}
+
+		ArrayList<VarDecl> vars = new ArrayList<>();
+		for (int i = 0; i < ctx.varDeclaration().size(); i++) {
+			vars.add(0, (VarDecl) stack.pop());
+		}
+
+		Expression returnExp = (Expression) stack.pop();
+
+		ArrayList<Formal> formals = new ArrayList<>();
+		if (ctx.formalList() != null && ctx.formalList().getChildCount() > 0) {
+			formals = (ArrayList<Formal>) stack.pop();
+		}
+
+		Identifier methodName = new Identifier(ctx.IDENTIFIER().getText());
+		Type returnType = (Type) stack.pop();
+
+		stack.push(new MethodDecl(returnType, methodName, formals, vars, statements, returnExp));
 	}
 
-	public void enterFormalList(MiniJavaParser.FormalListContext ctx) {
-		flclStack.push(new FormalList());
+	public void exitFormalList(MiniJavaParser.FormalListContext ctx) {
+		ArrayList<Formal> formals = new ArrayList<>();
+		for (int i = 0; i < ctx.formalRest().size(); i++) {
+			formals.add(0, (Formal) stack.pop()); // formalRest
+		}
+		if (ctx.type() != null) {
+			Identifier name = new Identifier(ctx.IDENTIFIER().getText());
+			Type type = (Type) stack.pop();
+			formals.add(0, new Formal(type, name));
+		}
+		stack.push(formals);
 	}
 
-	public void exitFormal(MiniJavaParser.FormalContext ctx) {
-		Type t = typeStack.pop();
-		Identifier id = getId(ctx, 1);
-		flclStack.peek().addFormal(new Formal(t, id.getS()));
-	}
-
-	public void enterVarDeclList(MiniJavaParser.VarDeclListContext ctx) {
-		vdlStack.push(new VarDeclList());
+	public void exitFormalRest(MiniJavaParser.FormalRestContext ctx) {
+		Identifier name = new Identifier(ctx.IDENTIFIER().getText());
+		Type type = (Type) stack.pop();
+		stack.push(new Formal(type, name));
 	}
 
 	public void exitVarDecl(MiniJavaParser.VarDeclContext ctx) {
-		Identifier id = getId(ctx, 1);
-		Type t = typeStack.pop();
-
-		vdlStack.peek().addVarDecl(new VarDecl(t, id.getS()));
+		Identifier name = new Identifier(ctx.IDENTIFIER().getText());
+		Type type = (Type) stack.pop();
+		stack.push(new VarDecl(type, name));
 	}
 
 	public void exitTypeInteger(MiniJavaParser.TypeIntegerContext ctx) {
-		typeStack.push(new IntegerType());
+		stack.push(new IntegerType());
 	}
 
 	public void exitTypeBoolean(MiniJavaParser.TypeBooleanContext ctx) {
-		typeStack.push(new BooleanType());
+		stack.push(new BooleanType());
 	}
 
 	public void exitTypeIntArray(MiniJavaParser.TypeIntArrayContext ctx) {
-		typeStack.push(new IntArrayType());
+		stack.push(new IntArrayType());
 	}
 
 	public void exitTypeIdentifier(MiniJavaParser.TypeIdentifierContext ctx) {
-		typeStack.push(new IdentifierType(ctx.getText()));
-	}
-
-	public void enterStmList(@NotNull MiniJavaParser.StmListContext ctx) {
-		stmStackStack.push(stmStack);
-		stmStack = new Stack<>();
-	}
-
-	public void exitStmList(@NotNull MiniJavaParser.StmListContext ctx) {
-		StatementList stml = new StatementList();
-		for (Statement stm : stmStack) {
-			stml.addStatement(stm);
-		}
-		stmListStack.push(stml);
-
-		stmStack = stmStackStack.pop();
+		stack.push(new IdentifierType(ctx.IDENTIFIER().getText()));
 	}
 
 	public void exitStmBlock(@NotNull MiniJavaParser.StmBlockContext ctx) {
-		stmStack.push(new Block(stmListStack.pop()));
+		ArrayList<Statement> stmts = new ArrayList<>();
+		for (int i = 0; i < ctx.statement().size(); i++) {
+			stmts.add(0, (Statement) stack.pop());
+		}
+		stack.push(new Block(stmts));
 	}
 
 	public void exitStmWhile(@NotNull MiniJavaParser.StmWhileContext ctx) {
-		Expression exp = expStack.pop();
-		Statement stm = stmStack.pop();
-		stmStack.push(new While(exp, stm));
+		Statement body = (Statement) stack.pop();
+		Expression cond = (Expression) stack.pop();
+		stack.push(new While(cond, body));
 	}
 
 	public void exitStmArrayAssign(@NotNull MiniJavaParser.StmArrayAssignContext ctx) {
-		Identifier id = getId(ctx, 0);
-		//attention to order!
-		Expression rightSide = expStack.pop();
-		Expression index = expStack.pop();
-		stmStack.push(new ArrayAssign(id, index, rightSide));
+		Expression value = (Expression) stack.pop();
+		Expression index = (Expression) stack.pop();
+		Identifier id = new Identifier(ctx.IDENTIFIER().getText());
+		stack.push(new ArrayAssign(id, index, value));
 	}
 
 	public void exitStmIf(@NotNull MiniJavaParser.StmIfContext ctx) {
-		Expression exp = expStack.pop();
-		//attention to order!
-		Statement stmElse = stmStack.pop();
-		Statement stmThen = stmStack.pop();
-		stmStack.push(new If(exp, stmThen, stmElse));
+		Statement elseStm = (Statement) stack.pop();
+		Statement thenStm = (Statement) stack.pop();
+		Expression cond = (Expression) stack.pop();
+		stack.push(new If(cond, thenStm, elseStm));
 	}
 
 	public void exitStmPrint(@NotNull MiniJavaParser.StmPrintContext ctx) {
-		Expression exp = expStack.pop();
-		stmStack.push(new Sout(exp));
+		Expression exp = (Expression) stack.pop();
+		stack.push(new Sout(exp));
 	}
 
 	public void exitStmAssign(@NotNull MiniJavaParser.StmAssignContext ctx) {
-		Identifier id = getId(ctx, 0);
-		Expression rightSide = expStack.pop();
-		stmStack.push(new Assign(id, rightSide));
+		Expression exp = (Expression) stack.pop();
+		Identifier id = new Identifier(ctx.IDENTIFIER().getText());
+		stack.push(new Assign(id, exp));
 	}
 
 	public void exitExpArrayLookup(@NotNull MiniJavaParser.ExpArrayLookupContext ctx) {
-		//attention to order!
-		Expression address = expStack.pop();
-		Expression arr = expStack.pop();
-		expStack.push(new ArrayLookup(arr, address));
+		Expression index = (Expression) stack.pop();
+		Expression array = (Expression) stack.pop();
+		stack.push(new ArrayLookup(array, index));
 	}
 
 	public void exitExpTimes(@NotNull MiniJavaParser.ExpTimesContext ctx) {
-		Expression e2 = expStack.pop();
-		Expression e1 = expStack.pop();
-		expStack.push(new Times(e1, e2));
+		Expression right = (Expression) stack.pop();
+		Expression left = (Expression) stack.pop();
+		stack.push(new Times(left, right));
 	}
 
 	public void exitExpAnd(@NotNull MiniJavaParser.ExpAndContext ctx) {
-		//attention to order!
-		Expression e2 = expStack.pop();
-		Expression e1 = expStack.pop();
-		expStack.push(new And(e1, e2));
+		Expression right = (Expression) stack.pop();
+		Expression left = (Expression) stack.pop();
+		stack.push(new And(left, right));
 	}
 
 	public void exitExpPlus(@NotNull MiniJavaParser.ExpPlusContext ctx) {
-		Expression e2 = expStack.pop();
-		Expression e1 = expStack.pop();
-		expStack.push(new Plus(e1, e2));
+		Expression right = (Expression) stack.pop();
+		Expression left = (Expression) stack.pop();
+		stack.push(new Plus(left, right));
 	}
 
 	public void exitExpMinus(@NotNull MiniJavaParser.ExpMinusContext ctx) {
-		Expression e2 = expStack.pop();
-		Expression e1 = expStack.pop();
-		expStack.push(new Minus(e1, e2));
+		Expression right = (Expression) stack.pop();
+		Expression left = (Expression) stack.pop();
+		stack.push(new Minus(left, right));
 	}
 
 	public void exitExpLessThan(@NotNull MiniJavaParser.ExpLessThanContext ctx) {
-		//attention to order!
-		Expression e2 = expStack.pop();
-		Expression e1 = expStack.pop();
-		expStack.push(new LessThan(e1, e2));
+		Expression right = (Expression) stack.pop();
+		Expression left = (Expression) stack.pop();
+		stack.push(new LessThan(left, right));
 	}
 
 	public void exitExpIntegerLiteral(@NotNull MiniJavaParser.ExpIntegerLiteralContext ctx) {
-		int i = Integer.parseInt(ctx.getText());
-		expStack.push(new IntegerLiteral(i));
+		int value = Integer.parseInt(ctx.INTEGER_LITERAL().getText());
+		stack.push(new IntegerLiteral(value));
 	}
 
 	public void exitExpIdentifierExp(@NotNull MiniJavaParser.ExpIdentifierExpContext ctx) {
-		expStack.push(new IdentifierExpression(ctx.getText()));
+		stack.push(new IdentifierExpression(ctx.IDENTIFIER().getText()));
 	}
 
 	public void exitExpNot(@NotNull MiniJavaParser.ExpNotContext ctx) {
-		Expression e = expStack.pop();
-		expStack.push(new Not(e));
+		Expression exp = (Expression) stack.pop();
+		stack.push(new Not(exp));
 	}
 
 	public void exitExpNewObject(@NotNull MiniJavaParser.ExpNewObjectContext ctx) {
-		Identifier id = getId(ctx, 1);
-		expStack.push(new NewObject(id));
+		stack.push(new NewObject(new Identifier(ctx.IDENTIFIER().getText())));
 	}
 
 	public void exitExpTrue(@NotNull MiniJavaParser.ExpTrueContext ctx) {
-		expStack.push(new True());
+		stack.push(new True());
 	}
 
 	public void exitExpFalse(@NotNull MiniJavaParser.ExpFalseContext ctx) {
-		expStack.push(new False());
+		stack.push(new False());
 	}
 
 	public void exitExpBracket(@NotNull MiniJavaParser.ExpBracketContext ctx) {
-		//no corresponding element in AST
+		// Apenas repassa a subexpressão
+		Expression exp = (Expression) stack.pop();
+		stack.push(exp);
 	}
 
 	public void exitExpNewArray(@NotNull MiniJavaParser.ExpNewArrayContext ctx) {
-		Expression e = expStack.pop();
-		expStack.push(new NewArray(e));
+		Expression size = (Expression) stack.pop();
+		stack.push(new NewArray(size));
 	}
 
 	public void exitExpThis(@NotNull MiniJavaParser.ExpThisContext ctx) {
-		expStack.push(new This());
+		stack.push(new This());
 	}
 
 	public void exitExpArrayLength(@NotNull MiniJavaParser.ExpArrayLengthContext ctx) {
-		Expression e = expStack.pop();
-		expStack.push(new ArrayLength(e));
-	}
-
-	public void enterCallArguments(@NotNull MiniJavaParser.CallArgumentsContext ctx) {
-		expStackStack.push(expStack);
-		expStack = new Stack<>();
-	}
-
-	public void exitCallArguments(@NotNull MiniJavaParser.CallArgumentsContext ctx) {
-		ExpressionList expl = new ExpressionList();
-		for (Expression e : expStack) {
-			expl.addExpression(e);
-		}
-		expListStack.push(expl);
-		expStack = expStackStack.pop();
+		Expression array = (Expression) stack.pop();
+		stack.push(new ArrayLength(array));
 	}
 
 	public void exitExpCall(@NotNull MiniJavaParser.ExpCallContext ctx) {
-		ExpressionList args = expListStack.pop();
-		Identifier id = getId(ctx, 2);
-		Expression e = expStack.pop();
-		expStack.push(new Call(e, id, args));
+		ExpressionList args = new ExpressionList();
+		if (ctx.expList() != null && ctx.expList().getChildCount() > 0) {
+			args = (ExpressionList) stack.pop();
+		}
+		Identifier method = new Identifier(ctx.IDENTIFIER().getText());
+		Expression obj = (Expression) stack.pop();
+		stack.push(new Call(obj, method, args));
+	}
+
+	public void exitExpRest(MiniJavaParser.ExpRestContext ctx) {
+		Expression exp = (Expression) stack.pop();
+		stack.push(exp); // acumulado em exitExpList
+	}
+
+	public void exitExpList(MiniJavaParser.ExpListContext ctx) {
+		ArrayList<Expression> args = new ArrayList<>();
+		for (int i = 0; i < ctx.expRest().size(); i++) {
+			args.add(0, (Expression) stack.pop());
+		}
+		if (ctx.expression() != null) {
+			args.add(0, (Expression) stack.pop());
+		}
+		stack.push(args);
 	}
 }

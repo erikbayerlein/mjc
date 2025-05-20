@@ -11,8 +11,8 @@ import org.mjc.visitor.Visitor;
 @Builder
 @AllArgsConstructor
 public class Plus extends Expression {
-	private Expression lhe;
-	private Expression rhe;
+	private Expression left;
+	private Expression right;
 
 	@Override
 	public <T> T accept(Visitor<T> v) {

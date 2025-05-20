@@ -11,7 +11,7 @@ import org.mjc.visitor.Visitor;
 @Builder
 @AllArgsConstructor
 public class IdentifierExpression extends Expression {
-	private String id;
+	private String name;
 
 	@Override
 	public <T> T accept(Visitor<T> v) {

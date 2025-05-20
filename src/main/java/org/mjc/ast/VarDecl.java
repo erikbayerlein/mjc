@@ -12,7 +12,7 @@ import org.mjc.visitor.Visitor;
 @AllArgsConstructor
 public class VarDecl extends Node {
 	private Type type;
-	private String name;
+	private Identifier name;
 
 	@Override
 	public <T> T accept(Visitor<T> v) {

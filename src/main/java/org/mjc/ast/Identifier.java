@@ -11,7 +11,7 @@ import org.mjc.visitor.Visitor;
 @Data
 @AllArgsConstructor
 public class Identifier extends Node {
-	private String s;
+	private String name;
 
 	@Override
 	public <T> T accept(Visitor<T> v) {

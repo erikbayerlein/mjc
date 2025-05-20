@@ -6,19 +6,22 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.mjc.visitor.Visitor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @EqualsAndHashCode(callSuper = false)
 @Data
 @Builder
 @AllArgsConstructor
 public class MethodDecl extends Node {
-	private Type type;
-	private String identifier;
+	private Type returnType;
+	private Identifier name;
 	@Builder.Default
-	private FormalList formals = new FormalList();
+	private ArrayList<Formal> formals;
 	@Builder.Default
-	private VarDeclList varDecls = new VarDeclList();
+	private ArrayList<VarDecl> vars;
 	@Builder.Default
-	private StatementList statements = new StatementList();
+	private ArrayList<Statement> statements;
 	private Expression returnExpression;
 
 	@Override

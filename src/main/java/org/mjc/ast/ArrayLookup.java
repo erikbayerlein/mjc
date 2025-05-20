@@ -12,7 +12,7 @@ import org.mjc.visitor.Visitor;
 @AllArgsConstructor
 public class ArrayLookup extends Expression {
 	private Expression array;
-	private Expression idx;
+	private Expression index;
 
 	@Override
 	public <T> T accept(Visitor<T> v) {

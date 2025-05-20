@@ -13,7 +13,7 @@ import org.mjc.visitor.Visitor;
 public class MainClass extends Node {
 	private Identifier className;
 	private Identifier argsName;
-	private StatementList statements;
+	private Statement statement;
 
 	@Override
 	public <T> T accept(Visitor<T> v) {

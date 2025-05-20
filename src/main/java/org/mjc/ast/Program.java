@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.mjc.visitor.Visitor;
 
+import java.util.ArrayList;
+
 @EqualsAndHashCode(callSuper = false)
 @Data
 @Builder
@@ -13,7 +15,7 @@ import org.mjc.visitor.Visitor;
 public class Program extends Node {
 	private MainClass mainClass;
 	@Builder.Default
-	private ClassDeclList classes = new ClassDeclList();
+	private ArrayList<ClassDecl> classes;
 
 	@Override
 	public <T> T accept(Visitor<T> v) {

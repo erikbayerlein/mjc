@@ -11,7 +11,7 @@ import org.mjc.visitor.Visitor;
 @Builder
 @AllArgsConstructor
 public class ArrayAssign extends Statement {
-	private Identifier identifier;
+	private Identifier name;
 	private Expression index;
 	private Expression value;
 
