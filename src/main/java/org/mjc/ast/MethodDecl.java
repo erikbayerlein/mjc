@@ -16,13 +16,14 @@ import java.util.List;
 public class MethodDecl extends Node {
 	private Type returnType;
 	private Identifier name;
-	@Builder.Default
-	private ArrayList<Formal> formals;
-	@Builder.Default
-	private ArrayList<VarDecl> vars;
-	@Builder.Default
-	private ArrayList<Statement> statements;
 	private Expression returnExpression;
+
+	@Builder.Default
+	private ArrayList<Formal> formals = new ArrayList<>();
+	@Builder.Default
+	private ArrayList<VarDecl> vars = new ArrayList<>();
+	@Builder.Default
+	private ArrayList<Statement> statements = new ArrayList<>();
 
 	@Override
 	public <T> T accept(Visitor<T> v) {

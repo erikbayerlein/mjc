@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.mjc.visitor.Visitor;
 
+import java.util.ArrayList;
+
 @EqualsAndHashCode(callSuper = false)
 @Data
 @Builder
@@ -13,9 +15,9 @@ import org.mjc.visitor.Visitor;
 public class If extends Statement {
 	private Expression condition;
 	@Builder.Default
-	private Statement thenStmt;
+	private Statement thenStmt = new Block(new ArrayList<Statement>());
 	@Builder.Default
-	private Statement elseStmt;
+	private Statement elseStmt = new Block(new ArrayList<Statement>());;
 
 	@Override
 	public <T> T accept(Visitor<T> v) {

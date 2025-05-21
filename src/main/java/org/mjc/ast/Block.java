@@ -11,8 +11,8 @@ import java.util.ArrayList;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Block extends Statement {
-	@Builder.default
-	private ArrayList<Statement> stmts;
+	@Builder.Default
+	private ArrayList<Statement> stmts = new ArrayList<>();
 
 	@Override
 	public <T> T accept(Visitor<T> v) {

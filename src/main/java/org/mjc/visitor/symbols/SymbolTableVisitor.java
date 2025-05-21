@@ -135,7 +135,7 @@ public class SymbolTableVisitor implements Visitor<Void> {
 
 	public Void visit(MainClass m) {
 		var classTable = ClassTable.builder()
-			.className(m.getClassName().getS())
+			.className(m.getClassName().getName())
 			.build();
 		addClassToMainTable(classTable);
 		currentClassTable = classTable;
@@ -155,31 +155,31 @@ public class SymbolTableVisitor implements Visitor<Void> {
 	public Void visit(ClassDeclSimple c) {
 		ClassTable classTableTmp = ClassTable
 			.builder()
-			.className(c.getClassName().getS())
+			.className(c.getClassName().getName())
 			.build();
 
 		addClassToMainTable(classTableTmp);
 		currentClassTable = classTableTmp;
 
-		c.getFields().getVarDecls().forEach(field -> field.accept(this));
-		c.getMethods().getMethodDecls().forEach(method -> method.accept(this));
+		c.getVarList().forEach(field -> field.accept(this));
+		c.getMethodList().forEach(method -> method.accept(this));
 
 		currentClassTable = null;
 		return null;
 	}
 
 	public Void visit(ClassDeclExtends c) {
-		ClassTable extendsClass = mainTable.getMap().get(c.getParent().getS());
+		ClassTable extendsClass = mainTable.getMap().get(c.getSuperClassName().getName());
 
 		if (extendsClass == null) {
-			var e = new SymbolTableException("The class " + c.getParent().getS() + " was not defined");
+			var e = new SymbolTableException("The class " + c.getSuperClassName().getName() + " was not defined");
 			errors.add(e);
 			return null;
 		}
 
 		currentClassTable = ClassTable
 			.builder()
-			.className(c.getClassName().getS())
+			.className(c.getClassName().getName())
 			.parent(extendsClass)
 			.fieldsContext(new LinkedHashMap<>(extendsClass.getFieldsContext()))
 			.methodsContext(new HashMap<>(extendsClass.getMethodsContext()))
@@ -188,8 +188,8 @@ public class SymbolTableVisitor implements Visitor<Void> {
 		addClassToMainTable(currentClassTable);
 
 		ignoreExtends = true;
-		c.getFields().getVarDecls().forEach(varDecl -> varDecl.accept(this));
-		c.getMethods().getMethodDecls().forEach(method -> method.accept(this));
+		c.getVarList().forEach(varDecl -> varDecl.accept(this));
+		c.getMethodList().forEach(method -> method.accept(this));
 
 		currentClassTable = null;
 		ignoreExtends = false;
@@ -198,23 +198,23 @@ public class SymbolTableVisitor implements Visitor<Void> {
 
 	public Void visit(Program p) {
 		p.getMainClass().accept(this);
-		p.getClasses().getClassDecls().forEach(clazz -> clazz.accept(this));
+		p.getClasses().forEach(clazz -> clazz.accept(this));
 		return null;
 	}
 
 	public Void visit(MethodDecl m) {
 		MethodTable methodTable = MethodTable
 			.builder()
-			.methodName(m.getIdentifier())
+			.methodName(m.getName().getName())
 			.classParent(currentClassTable)
-			.methodReturnType(m.getType())
+			.methodReturnType(m.getReturnType())
 			.build();
 
 		addMethodToClassTable(currentClassTable, methodTable);
 		currentMethodTable = methodTable;
 
-		m.getFormals().getFormals().forEach(formal -> formal.accept(this));
-		m.getVarDecls().getVarDecls().forEach(varDecl -> varDecl.accept(this));
+		m.getFormals().forEach(formal -> formal.accept(this));
+		m.getVars().forEach(varDecl -> varDecl.accept(this));
 
 		currentMethodTable = null;
 		return null;
@@ -223,15 +223,15 @@ public class SymbolTableVisitor implements Visitor<Void> {
 	public Void visit(VarDecl v) {
 		var name = v.getName();
 		if (currentMethodTable == null) {
-			addFieldToClassTable(currentClassTable, v.getType(), name);
+			addFieldToClassTable(currentClassTable, v.getType(), name.getName());
 		} else {
-			addLocalsToMethodTable(currentMethodTable, v.getType(), name);
+			addLocalsToMethodTable(currentMethodTable, v.getType(), name.getName());
 		}
 		return null;
 	}
 
 	public Void visit(Formal f) {
-		addParamToMethodTable(currentMethodTable, f.getType(), f.getName());
+		addParamToMethodTable(currentMethodTable, f.getType(), f.getName().getName());
 		return null;
 	}
 

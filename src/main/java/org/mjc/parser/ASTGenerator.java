@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Stack;
 
-public class ASTGenerator extends org.mjc.antlr.MiniJavaBaseListener {
+public class ASTGenerator extends org.mjc.antlr.MiniJavaBaseListener implements org.antlr.v4.runtime.tree.ParseTreeListener {
 
 	private Program prog;
 	private MainClass mc;
@@ -73,7 +73,11 @@ public class ASTGenerator extends org.mjc.antlr.MiniJavaBaseListener {
 		Statement statement = ctx.statement() != null ? (Statement) stack.pop() : null;
 		Identifier className = new Identifier(ctx.IDENTIFIER(0).getText());
 		Identifier argName = new Identifier(ctx.IDENTIFIER(1).getText());
-		stack.push(new MainClass(className, argName, statement));
+		ArrayList<Statement> statements = new ArrayList<>();
+		if (statement != null) {
+			statements.add(statement);
+		}
+		stack.push(new MainClass(className, argName, statements));
 	}
 
 	public void exitClassDecl(MiniJavaParser.ClassDeclContext ctx) {
@@ -118,7 +122,7 @@ public class ASTGenerator extends org.mjc.antlr.MiniJavaBaseListener {
 		Identifier methodName = new Identifier(ctx.IDENTIFIER().getText());
 		Type returnType = (Type) stack.pop();
 
-		stack.push(new MethodDecl(returnType, methodName, formals, vars, statements, returnExp));
+		stack.push(new MethodDecl(returnType, methodName, returnExp, formals, vars, statements));
 	}
 
 	public void exitFormalList(MiniJavaParser.FormalListContext ctx) {
@@ -286,16 +290,23 @@ public class ASTGenerator extends org.mjc.antlr.MiniJavaBaseListener {
 	public void exitExpCall(@NotNull MiniJavaParser.ExpCallContext ctx) {
 		ExpressionList args = new ExpressionList();
 		if (ctx.expList() != null && ctx.expList().getChildCount() > 0) {
-			args = (ExpressionList) stack.pop();
+			if (!stack.isEmpty()) {
+				args = (ExpressionList) stack.pop();
+			}
 		}
 		Identifier method = new Identifier(ctx.IDENTIFIER().getText());
-		Expression obj = (Expression) stack.pop();
+		Expression obj = null;
+		if (!stack.isEmpty()) {
+			obj = (Expression) stack.pop();
+		} else {
+			throw new java.util.EmptyStackException();
+		}
 		stack.push(new Call(obj, method, args));
 	}
 
 	public void exitExpRest(MiniJavaParser.ExpRestContext ctx) {
 		Expression exp = (Expression) stack.pop();
-		stack.push(exp); // acumulado em exitExpList
+		stack.push(exp);
 	}
 
 	public void exitExpList(MiniJavaParser.ExpListContext ctx) {

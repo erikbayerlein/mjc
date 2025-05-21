@@ -11,7 +11,7 @@ import java.util.ArrayList;
 @EqualsAndHashCode
 public class FormalList {
 	@Builder.Default
-	private ArrayList<Formal> formals;
+	private ArrayList<Formal> formals = new ArrayList<>();
 
 	public void addFormal(Formal formal) {
 		formals.add(formal);

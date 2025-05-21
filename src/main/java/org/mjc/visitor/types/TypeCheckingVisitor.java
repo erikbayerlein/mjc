@@ -6,8 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.mjc.ast.*;
-import org.mjc.mija.SemanticAnalysisException;
-import org.mjc.mija.SemanticAnalysisStrategy;
+import org.mjc.SemanticAnalysisException;
 import org.mjc.visitor.Visitor;
 import org.mjc.visitor.symbols.ClassTable;
 import org.mjc.visitor.symbols.MainTable;
@@ -21,7 +20,7 @@ import java.util.ArrayList;
 @Builder
 @Data
 @Log4j2
-public class TypeCheckingVisitor implements Visitor<Type>, SemanticAnalysisStrategy {
+public class TypeCheckingVisitor implements Visitor<Type> {
 	@Builder.Default
 	private MainTable mainTable = new MainTable();
 	@Builder.Default
@@ -37,8 +36,8 @@ public class TypeCheckingVisitor implements Visitor<Type>, SemanticAnalysisStrat
 	}
 
 	public Type visit(And a) {
-		Type lheExpr = a.getLhe().accept(this);
-		Type rheExpr = a.getRhe().accept(this);
+		Type lheExpr = a.getLeft().accept(this);
+		Type rheExpr = a.getRight().accept(this);
 
 		if (lheExpr instanceof BooleanType && rheExpr instanceof BooleanType) {
 			return new BooleanType();
@@ -58,7 +57,7 @@ public class TypeCheckingVisitor implements Visitor<Type>, SemanticAnalysisStrat
 	}
 
 	public Type visit(Not n) {
-		Type expr = n.getE().accept(this);
+		Type expr = n.getExpr().accept(this);
 		if (expr instanceof BooleanType) {
 			return new BooleanType();
 		}
@@ -76,32 +75,32 @@ public class TypeCheckingVisitor implements Visitor<Type>, SemanticAnalysisStrat
 	}
 
 	public Type visit(Identifier i) {
-		return getTypeFromEntireClassContextInsideAMethod(i.getS());
+		return getTypeFromEntireClassContextInsideAMethod(i.getName());
 	}
 
 	public Type visit(Call c) {
-		Type object = c.getOwner().accept(this);
+		Type object = c.getReceiver().accept(this);
 		if (!(object instanceof IdentifierType)) {
 			addError("Class referenced wat not found my dude!");
 			return null;
 		}
 
-		String tmpClassIdentifier = ((IdentifierType) object).getS();
+		String tmpClassIdentifier = ((IdentifierType) object).getName();
 		ClassTable tmpClassTable = mainTable.getMap().get(tmpClassIdentifier);
 		if (tmpClassTable == null) {
 			addError("Class " + tmpClassIdentifier + " was not found");
 			return null;
 		}
 
-		MethodTable tmpMethodTable = tmpClassTable.getMethodsContext().get(c.getMethod().getS());
+		MethodTable tmpMethodTable = tmpClassTable.getMethodsContext().get(c.getMethod().getName());
 		if (tmpMethodTable == null) {
-			addError("Method " + c.getMethod().getS() + " was not found in class" + tmpClassIdentifier);
+			addError("Method " + c.getMethod().getName() + " was not found in class" + tmpClassIdentifier);
 			return null;
 		}
 
 		ArrayList<Expression> args = c.getExpressionList().getList();
 		if (tmpMethodTable.getParamsContext().size() != args.size()) {
-			addError("Method call" + c.getMethod().getS() + " has not respected arity of formals");
+			addError("Method call" + c.getMethod().getName() + " has not respected arity of formals");
 			return null;
 		}
 
@@ -119,7 +118,7 @@ public class TypeCheckingVisitor implements Visitor<Type>, SemanticAnalysisStrat
 
 
 	public Type visit(IdentifierExpression i) {
-		Type type = getTypeFromEntireClassContextInsideAMethod(i.getId());
+		Type type = getTypeFromEntireClassContextInsideAMethod(i.getName());
 		if (type != null) {
 			return type;
 		}
@@ -132,11 +131,11 @@ public class TypeCheckingVisitor implements Visitor<Type>, SemanticAnalysisStrat
 	}
 
 	public Type visit(NewObject n) {
-		currentClassTable = mainTable.getMap().get(n.getIdentifier().getS());
+		currentClassTable = mainTable.getMap().get(n.getClassName().getName());
 		if (currentClassTable != null) {
-			return new IdentifierType(n.getIdentifier().getS());
+			return new IdentifierType(n.getClassName().getName());
 		}
-		addError("Class " + n.getIdentifier().getS() + " does not exist");
+		addError("Class " + n.getClassName().getName() + " does not exist");
 		return null;
 	}
 
@@ -150,7 +149,7 @@ public class TypeCheckingVisitor implements Visitor<Type>, SemanticAnalysisStrat
 
 	public Type visit(ArrayLookup a) {
 		Type arrayType = a.getArray().accept(this);
-		Type idxType = a.getIdx().accept(this);
+		Type idxType = a.getIndex().accept(this);
 
 		if (arrayType instanceof IntArrayType && idxType instanceof IntegerType) {
 			return new IntegerType();
@@ -163,7 +162,7 @@ public class TypeCheckingVisitor implements Visitor<Type>, SemanticAnalysisStrat
 	}
 
 	public Type visit(ArrayAssign a) {
-		Type arrayType = a.getIdentifier().accept(this);
+		Type arrayType = a.getName().accept(this);
 		Type idxType = a.getIndex().accept(this);
 		Type valueType = a.getValue().accept(this);
 
@@ -184,8 +183,8 @@ public class TypeCheckingVisitor implements Visitor<Type>, SemanticAnalysisStrat
 	}
 
 	public Type visit(Plus p) {
-		Type lheType = p.getLhe().accept(this);
-		Type rheType = p.getRhe().accept(this);
+		Type lheType = p.getLeft().accept(this);
+		Type rheType = p.getRight().accept(this);
 
 		if (checkBinaryOperation("Plus", lheType, rheType)) {
 			return new IntegerType();
@@ -194,8 +193,8 @@ public class TypeCheckingVisitor implements Visitor<Type>, SemanticAnalysisStrat
 	}
 
 	public Type visit(Minus m) {
-		Type lheType = m.getLhe().accept(this);
-		Type rheType = m.getRhe().accept(this);
+		Type lheType = m.getLeft().accept(this);
+		Type rheType = m.getRight().accept(this);
 
 		if (checkBinaryOperation("Minus", lheType, rheType)) {
 			return new IntegerType();
@@ -204,8 +203,8 @@ public class TypeCheckingVisitor implements Visitor<Type>, SemanticAnalysisStrat
 	}
 
 	public Type visit(Times t) {
-		Type lheType = t.getLhe().accept(this);
-		Type rheType = t.getRhe().accept(this);
+		Type lheType = t.getLeft().accept(this);
+		Type rheType = t.getRight().accept(this);
 
 		if (checkBinaryOperation("Times", lheType, rheType)) {
 			return new IntegerType();
@@ -226,8 +225,8 @@ public class TypeCheckingVisitor implements Visitor<Type>, SemanticAnalysisStrat
 	}
 
 	public Type visit(LessThan l) {
-		Type lheType = l.getLhe().accept(this);
-		Type rheType = l.getRhe().accept(this);
+		Type lheType = l.getLeft().accept(this);
+		Type rheType = l.getRight().accept(this);
 
 		if (checkBinaryOperation("Less Than", lheType, rheType)) {
 			return new BooleanType();
@@ -257,20 +256,20 @@ public class TypeCheckingVisitor implements Visitor<Type>, SemanticAnalysisStrat
 
 		checkIfBooleanType("If condition", conditionType);
 
-		i.getThenBranch().accept(this);
-		i.getElseBranch().accept(this);
+		i.getThenStmt().accept(this);
+		i.getElseStmt().accept(this);
 		return null;
 	}
 
 	public Type visit(Assign a) {
-		Type typeToEvaluate = a.getValue().accept(this);
+		Type typeToEvaluate = a.getExpr().accept(this);
 
 		if (typeToEvaluate == null) {
 			addError("The expression type is null");
 			return null;
 		}
 
-		String identifier = a.getIdentifier().getS();
+		String identifier = a.getName().getName();
 		Type expectedType = getTypeFromEntireClassContextInsideAMethod(identifier);
 
 		if (expectedType == null) {
@@ -292,32 +291,32 @@ public class TypeCheckingVisitor implements Visitor<Type>, SemanticAnalysisStrat
 	}
 
 	public Type visit(Block b) {
-		b.getStatements().getStatements().forEach(stm -> stm.accept(this));
+		b.getStmts().forEach(stm -> stm.accept(this));
 		return null;
 	}
 
 	public Type visit(MainClass m) {
-		currentClassTable = mainTable.getMap().get(m.getClassName().getS());
+		currentClassTable = mainTable.getMap().get(m.getClassName().getName());
 		currentMethodTable = currentClassTable.getMethodsContext().get("main");
-		m.getStatements().getStatements().forEach(stm -> stm.accept(this));
+		m.getStatements().forEach(stm -> stm.accept(this));
 		currentMethodTable = null;
 		currentClassTable = null;
 		return null;
 	}
 
 	public Type visit(ClassDeclSimple c) {
-		currentClassTable = mainTable.getMap().get(c.getClassName().getS());
+		currentClassTable = mainTable.getMap().get(c.getClassName().getName());
 
-		c.getMethods().getMethodDecls().forEach(method -> method.accept(this));
+		c.getMethodList().forEach(method -> method.accept(this));
 
 		currentClassTable = null;
 		return null;
 	}
 
 	public Type visit(ClassDeclExtends c) {
-		currentClassTable = mainTable.getMap().get(c.getClassName().getS());
+		currentClassTable = mainTable.getMap().get(c.getClassName().getName());
 
-		c.getMethods().getMethodDecls().forEach(method -> method.accept(this));
+		c.getMethodList().forEach(method -> method.accept(this));
 
 		currentClassTable = null;
 		return null;
@@ -325,19 +324,19 @@ public class TypeCheckingVisitor implements Visitor<Type>, SemanticAnalysisStrat
 
 	public Type visit(Program p) {
 		p.getMainClass().accept(this);
-		p.getClasses().getClassDecls().forEach(clazz -> clazz.accept(this));
+		p.getClasses().forEach(clazz -> clazz.accept(this));
 		return null;
 	}
 
 	public Type visit(MethodDecl m) {
-		currentMethodTable = currentClassTable.getMethodsContext().get(m.getIdentifier());
+		currentMethodTable = currentClassTable.getMethodsContext().get(m.getName());
 
-		m.getStatements().getStatements().forEach(stm -> stm.accept(this));
+		m.getStatements().forEach(stm -> stm.accept(this));
 		Type returnType = m.getReturnExpression().accept(this);
-		Type expectedReturnType = m.getType();
+		Type expectedReturnType = m.getReturnType();
 
 		if (!(returnType.equals(expectedReturnType))) {
-			addError("Method " + m.getIdentifier() + " return type didn't match");
+			addError("Method " + m.getName() + " return type didn't match");
 		}
 
 		currentMethodTable = null;
@@ -439,7 +438,7 @@ public class TypeCheckingVisitor implements Visitor<Type>, SemanticAnalysisStrat
 
 	private boolean checkIfTypeMatchWithInheritance(Type argType, Type expectedType) {
 		while (argType instanceof IdentifierType type && !argType.equals(expectedType)) {
-			ClassTable classTable = mainTable.getMap().get(type.getS());
+			ClassTable classTable = mainTable.getMap().get(type.getName());
 			if (classTable == null || classTable.getParent() == null) {
 				return false;
 			}
