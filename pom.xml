@@ -95,6 +95,8 @@
                             <version>1.18.38</version>
                         </path>
                     </annotationProcessorPaths>
+                    <source>21</source>
+                    <target>21</target>
                 </configuration>
             </plugin>
 
