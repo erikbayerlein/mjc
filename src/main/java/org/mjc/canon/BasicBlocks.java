@@ -53,8 +53,8 @@ public class BasicBlocks {
 	}
 
 	void makeBlocks(StmList l) {
-		if (l == null) {
-		} else if (l.head instanceof LABEL lHead) {
+		if (l == null) return;
+		else if (l.head instanceof LABEL lHead) {
 			lastStm = new StmList(lHead, null);
 			if (lastBlock == null)
 				lastBlock = blocks = new StmListList(lastStm, null);

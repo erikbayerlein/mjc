@@ -17,13 +17,13 @@ import java.util.HashMap;
 public class TraceSchedule {
 
 	public StmList stms;
-	BasicBlocks blocks;
+	BasicBlocks bBlocks;
 	@Builder.Default
 	HashMap<Label, StmList> table = new HashMap<>();
 
 	public TraceSchedule(BasicBlocks b) {
 		table = new HashMap<>();
-		blocks = b;
+		bBlocks = b;
 		for (var l = b.blocks; l != null; l = l.tail) {
 			table.put(((LABEL) l.head.head).label, l.head);
 		}
@@ -40,7 +40,7 @@ public class TraceSchedule {
 	}
 
 	void trace(StmList l) {
-		for (; ; ) {
+		for (;;) {
 			var lab = (LABEL) l.head;
 			table.remove(lab.label);
 			StmList last = getLast(l);
@@ -57,8 +57,8 @@ public class TraceSchedule {
 					}
 				}
 				case CJUMP j -> {
-					StmList t = table.get(j.condTrue);
-					StmList f = table.get(j.condFalse);
+					StmList t = table.get(j.iftrue);
+					StmList f = table.get(j.iffalse);
 					if (f != null) {
 						last.tail.tail = f;
 						l = f;
@@ -67,8 +67,8 @@ public class TraceSchedule {
 							.relop(CJUMP.notRel(j.relop))
 							.left(j.left)
 							.right(j.right)
-							.condTrue(j.condTrue)
-							.condFalse(j.condFalse)
+							.iftrue(j.iftrue)
+							.iffalse(j.iffalse)
 							.build();
 						last.tail.tail = t;
 						l = t;
@@ -78,14 +78,14 @@ public class TraceSchedule {
 							.relop(j.relop)
 							.left(j.left)
 							.right(j.right)
-							.condTrue(j.condTrue)
-							.condFalse(ff)
+							.iftrue(j.iftrue)
+							.iffalse(ff)
 							.build();
 						last.tail.tail = StmList.builder()
 							.head(new LABEL(ff))
 							.tail(
 								StmList.builder()
-									.head(new JUMP(j.condFalse))
+									.head(new JUMP(j.iffalse))
 									.tail(getNext())
 									.build()
 							)
@@ -99,16 +99,16 @@ public class TraceSchedule {
 	}
 
 	StmList getNext() {
-		if (blocks.blocks == null) {
-			return new StmList(new LABEL(blocks.done), null);
+		if (bBlocks.blocks == null) {
+			return new StmList(new LABEL(bBlocks.done), null);
 		} else {
-			StmList s = blocks.blocks.head;
+			StmList s = bBlocks.blocks.head;
 			var lab = (LABEL) s.head;
 			if (table.get(lab.label) != null) {
 				trace(s);
 				return s;
 			} else {
-				blocks.blocks = blocks.blocks.tail;
+				bBlocks.blocks = bBlocks.blocks.tail;
 				return getNext();
 			}
 		}

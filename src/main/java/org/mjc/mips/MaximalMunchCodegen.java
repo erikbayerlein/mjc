@@ -99,7 +99,7 @@ public class MaximalMunchCodegen implements MipsCodegen {
 		Temp l = munchExp(cjump.left);
 		Temp r = munchExp(cjump.right);
 		emit(new AssemOPER(relop + "`s0, `s1, `j0\n", null, new TempList(l, new TempList(r, null)),
-			new LabelList(cjump.condTrue, new LabelList(cjump.condFalse, null))));
+			new LabelList(cjump.iftrue, new LabelList(cjump.iffalse, null))));
 	}
 
 	private void munchStmJUMP(JUMP jump) {
@@ -112,7 +112,7 @@ public class MaximalMunchCodegen implements MipsCodegen {
 		munchStm(seq.right);
 	}
 
-	public void munchStmMove(ExpAbstract dst, ExpAbstract src) {
+	public void munchStmMove(Exp_ dst, Exp_ src) {
 		if (dst instanceof MEM mem) {
 			munchStmMove(mem, src);
 		} else if (dst instanceof TEMP && src instanceof CALL call) {
@@ -124,10 +124,10 @@ public class MaximalMunchCodegen implements MipsCodegen {
 
 	}
 
-	void munchStmMove(MEM dst, ExpAbstract src) {
+	void munchStmMove(MEM dst, Exp_ src) {
 	}
 
-	Temp munchExp(ExpAbstract exp2) {
+	Temp munchExp(Exp_ exp2) {
 		Temp temp_reg = new Temp();
 		return temp_reg;
 	}

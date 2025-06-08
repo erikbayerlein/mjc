@@ -12,18 +12,18 @@ import org.mjc.temp.LabelList;
 @Builder
 @AllArgsConstructor
 public class JUMP extends Stm {
-	public ExpAbstract exp;
+	public Exp_ exp;
 	public LabelList targets;
 
 	public JUMP(Label target) {
 		this(new NAME(target), new LabelList(target, null));
 	}
 
-	public ExpList children() {
+	public ExpList kids() {
 		return new ExpList(exp, null);
 	}
 
-	public Stm build(ExpList children) {
-		return new JUMP(children.head, targets);
+	public Stm build(ExpList kids) {
+		return new JUMP(kids.head, targets);
 	}
 }

@@ -9,14 +9,13 @@ import lombok.EqualsAndHashCode;
 @Data
 @Builder
 @AllArgsConstructor
-public class MEM extends ExpAbstract {
-	public ExpAbstract exp;
+public class MEM extends Exp_ {
+	public Exp_ exp;
 
-	public ExpList children() {
+	public ExpList kids() {
 		return new ExpList(exp, null);
 	}
-
-	public ExpAbstract build(ExpList children) {
-		return new MEM(children.head);
+	public Exp_ build(ExpList kids) {
+		return new MEM(kids.head);
 	}
 }

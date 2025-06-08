@@ -16,7 +16,6 @@ public class Temp {
 	public Temp() {
 		num = count++;
 	}
-
 	public String toString() {
 		return "t" + num;
 	}

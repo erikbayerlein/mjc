@@ -28,7 +28,7 @@ public class IRTreeVisitor implements Visitor<Exp> {
 	private Frag frag;
 	private Frag initialFrag;
 	@Builder.Default
-	private List<ExpAbstract> listExp = new ArrayList<>();
+	private List<Exp_> listExp = new ArrayList<>();
 	@Builder.Default
 	private MainTable mainTable = new MainTable();
 	@Builder.Default
@@ -156,7 +156,7 @@ public class IRTreeVisitor implements Visitor<Exp> {
 		currentClassTable = mainTable.getMap().get(n.getIdentifier().getS());
 		int sizeOfFields = mainTable.getMap().get(n.getIdentifier().getS()).getFieldsContext().size();
 
-		var parametersList = new LinkedList<ExpAbstract>();
+		var parametersList = new LinkedList<Exp_>();
 		parametersList.add(
 			BINOP.builder()
 				.binop(BINOP.MUL)
@@ -312,7 +312,7 @@ public class IRTreeVisitor implements Visitor<Exp> {
 
 	public Exp visit(NewArray n) {
 		var newArraySize = n.getSize().accept(this);
-		var parametersList = new LinkedList<ExpAbstract>();
+		var parametersList = new LinkedList<Exp_>();
 
 		// mem size to alloc
 		var exp = BINOP.builder()
@@ -351,8 +351,8 @@ public class IRTreeVisitor implements Visitor<Exp> {
 			.relop(CJUMP.GT)
 			.left(cond)
 			.right(new CONST(1))
-			.condTrue(bodyLabel)
-			.condFalse(endLabel)
+			.iftrue(bodyLabel)
+			.iffalse(endLabel)
 			.build();
 
 		var whileStatement = SEQ.builder()
@@ -399,8 +399,8 @@ public class IRTreeVisitor implements Visitor<Exp> {
 			.relop(CJUMP.EQ)
 			.left(new CONST(1))
 			.right(condExpr.unEx())
-			.condTrue(trueLabel)
-			.condFalse(falseLabel)
+			.iftrue(trueLabel)
+			.iffalse(falseLabel)
 			.build();
 
 		var ifStmt = new SEQ(condStmt, thenElseStmt);
@@ -429,7 +429,7 @@ public class IRTreeVisitor implements Visitor<Exp> {
 	}
 
 	public Exp visit(Sout s) {
-		var argsList = new LinkedList<ExpAbstract>();
+		var argsList = new LinkedList<Exp_>();
 		var exp = s.getExpression().accept(this);
 		argsList.add(exp.unEx());
 
@@ -440,7 +440,7 @@ public class IRTreeVisitor implements Visitor<Exp> {
 
 	public Exp visit(Block b) {
 		var size = b.getStatements().getStatements().size();
-		ExpAbstract expBlock = new CONST(0);
+		Exp_ expBlock = new CONST(0);
 
 		for (int i = 0; i < size; i++) {
 			var expr = new EXP(b.getStatements().getStatements().get(i).accept(this).unEx());
@@ -572,7 +572,7 @@ public class IRTreeVisitor implements Visitor<Exp> {
 		return null;
 	}
 
-	public void addExp(ExpAbstract exp) {
+	public void addExp(Exp_ exp) {
 		listExp.add(exp);
 	}
 }

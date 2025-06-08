@@ -13,11 +13,10 @@ import org.mjc.exceptions.IRTreeException;
 public class SEQ extends Stm {
 	public Stm left, right;
 
-	public ExpList children() {
-		throw new IRTreeException("children() not applicable to SEQ");
+	public ExpList kids() {
+		throw new IRTreeException("kids() not applicable to SEQ");
 	}
-
-	public Stm build(ExpList children) {
+	public Stm build(ExpList kids) {
 		throw new IRTreeException("build() not applicable to SEQ");
 	}
 }

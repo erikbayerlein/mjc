@@ -3,7 +3,7 @@ package org.mjc.frame;
 import java.util.List;
 
 import org.mjc.assem.InstrList;
-import org.mjc.irtree.ExpAbstract;
+import org.mjc.irtree.Exp_;
 import org.mjc.irtree.Stm;
 import org.mjc.irtree.StmList;
 import org.mjc.temp.Label;
@@ -16,7 +16,7 @@ public abstract class Frame implements TempMap {
 
     public abstract Frame newFrame(String name, List<Boolean> formals);
     public abstract Access allocLocal();
-    public abstract ExpAbstract externalCall(String func, List<ExpAbstract> args);
+    public abstract Exp_ externalCall(String func, List<Exp_> args);
 
     public abstract Temp FP();
     public abstract Temp RV();

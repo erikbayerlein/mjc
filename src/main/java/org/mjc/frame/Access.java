@@ -1,8 +1,8 @@
 package org.mjc.frame;
 
-import org.mjc.irtree.ExpAbstract;
+import org.mjc.irtree.Exp_;
 
 public abstract class Access {
     public abstract String toString();
-    public abstract ExpAbstract exp(ExpAbstract e);
+    public abstract Exp_ exp(Exp_ e);
 }

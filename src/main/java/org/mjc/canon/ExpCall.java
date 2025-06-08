@@ -14,8 +14,8 @@ import org.mjc.irtree.Stm;
 public class ExpCall extends Stm {
 	CALL call;
 
-	public ExpList children() {
-		return call.children();
+	public ExpList kids() {
+		return call.kids();
 	}
 
 	public Stm build(ExpList kids) {

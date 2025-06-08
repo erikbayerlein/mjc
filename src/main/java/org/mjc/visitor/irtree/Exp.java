@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.mjc.irtree.ExpAbstract;
+import org.mjc.irtree.Exp_;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -12,9 +12,9 @@ import org.mjc.irtree.ExpAbstract;
 @Data
 public class Exp {
 
-	public ExpAbstract exp;
+	public Exp_ exp;
 
-	public ExpAbstract unEx() {
+	public Exp_ unEx() {
 		return exp;
 	}
 }

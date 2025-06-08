@@ -26,7 +26,7 @@ public class Canon {
 		else return new SEQ(a, b);
 	}
 
-	static boolean commute(Stm a, ExpAbstract b) {
+	static boolean commute(Stm a, Exp_ b) {
 		return isNop(a)
 			|| b instanceof NAME
 			|| b instanceof CONST;
@@ -41,7 +41,7 @@ public class Canon {
 			var moveCall = new MoveCall(sTEMP, sCALL);
 			return reorderStm(moveCall);
 		} else if (s.dst instanceof ESEQ sESEQ) {
-			var algo = SEQ.builder()
+			var buildEseq = SEQ.builder()
 				.left(sESEQ.stm)
 				.right(
 					MOVE.builder()
@@ -50,7 +50,7 @@ public class Canon {
 						.build()
 				)
 				.build();
-			return doStm(algo);
+			return doStm(buildEseq);
 		} else {
 			return reorderStm(s);
 		}
@@ -74,7 +74,7 @@ public class Canon {
 	}
 
 	static Stm reorderStm(Stm s) {
-		StmExpList x = reorder(s.children());
+		StmExpList x = reorder(s.kids());
 		return seq(x.stm, s.build(x.exps));
 	}
 
@@ -87,17 +87,14 @@ public class Canon {
 			.build();
 	}
 
-	static ESEQ doExp(ExpAbstract e) {
+	static ESEQ doExp(Exp_ e) {
 		if (e instanceof ESEQ eESEQ) {
 			return doExp(eESEQ);
-		} else {
-			return reorderExp(e);
-		}
-
+		} else return reorderExp(e);
 	}
 
-	static ESEQ reorderExp(ExpAbstract e) {
-		StmExpList x = reorder(e.children());
+	static ESEQ reorderExp(Exp_ e) {
+		StmExpList x = reorder(e.kids());
 		return ESEQ.builder()
 			.exp(e.build(x.exps))
 			.stm(x.stm)
@@ -147,8 +144,7 @@ public class Canon {
 	}
 
 	static StmList linear(SEQ s, StmList l) {
-		var rightSideLinear = linear(s.right, l);
-		return linear(s.left, rightSideLinear);
+		return linear(s.left, linear(s.right, l));
 	}
 
 	static StmList linear(Stm s, StmList l) {
@@ -160,8 +156,7 @@ public class Canon {
 	}
 
 	public static StmList linearize(Stm s) {
-		var stm = doStm(s);
-		return linear(stm, null);
+		return linear(doStm(s), null);
 	}
 }
 

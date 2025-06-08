@@ -10,14 +10,14 @@ import org.mjc.temp.Label;
 @Data
 @Builder
 @AllArgsConstructor
-public class NAME extends ExpAbstract {
+public class NAME extends Exp_ {
 	public Label label;
 
-	public ExpList children() {
+	public ExpList kids() {
 		return null;
 	}
 
-	public ExpAbstract build(ExpList children) {
+	public Exp_ build(ExpList kids) {
 		return this;
 	}
 }

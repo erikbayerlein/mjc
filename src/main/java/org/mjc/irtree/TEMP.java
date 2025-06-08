@@ -10,14 +10,13 @@ import org.mjc.temp.Temp;
 @Data
 @Builder
 @AllArgsConstructor
-public class TEMP extends ExpAbstract {
+public class TEMP extends Exp_ {
 	public Temp temp;
 
-	public ExpList children() {
+	public ExpList kids() {
 		return null;
 	}
-
-	public ExpAbstract build(ExpList children) {
+	public Exp_ build(ExpList kids) {
 		return this;
 	}
 }

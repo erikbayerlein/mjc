@@ -12,8 +12,8 @@ public class MoveCall extends Stm {
 	TEMP dst;
 	CALL src;
 
-	public ExpList children() {
-		return src.children();
+	public ExpList kids() {
+		return src.kids();
 	}
 
 	public Stm build(ExpList kids) {

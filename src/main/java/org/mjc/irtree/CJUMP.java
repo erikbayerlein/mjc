@@ -12,12 +12,19 @@ import org.mjc.temp.Label;
 @Builder
 @AllArgsConstructor
 public class CJUMP extends Stm {
+	public int relop;
+	public Exp_ left, right;
+	public Label iftrue, iffalse;
 	public final static int EQ = 0, NE = 1, LT = 2, GT = 3, LE = 4, GE = 5,
 		ULT = 6, ULE = 7, UGT = 8, UGE = 9;
-	public int relop;
-	public ExpAbstract left, right;
-	public Label condTrue, condFalse;
 
+	public ExpList kids() {
+		return new ExpList(left, new ExpList(right, null));
+	}
+
+	public Stm build(ExpList kids) {
+		return new CJUMP(relop, kids.head, kids.tail.head, iftrue, iffalse);
+	}
 
 	public static int notRel(int relop) {
 		return switch (relop) {
@@ -33,13 +40,5 @@ public class CJUMP extends Stm {
 			case ULE -> UGT;
 			default -> throw new IRTreeException("bad relop in CJUMP.notRel");
 		};
-	}
-
-	public ExpList children() {
-		return new ExpList(left, new ExpList(right, null));
-	}
-
-	public Stm build(ExpList children) {
-		return new CJUMP(relop, children.head, children.tail.head, condTrue, condFalse);
 	}
 }

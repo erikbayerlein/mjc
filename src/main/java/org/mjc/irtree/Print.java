@@ -11,13 +11,13 @@ import org.mjc.temp.TempMap;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class SOUT {
+public class Print {
 
 	java.io.PrintStream out;
 	@Builder.Default
 	TempMap tempMap = new DefaultMap();
 
-	public SOUT(java.io.PrintStream o) {
+	public Print(java.io.PrintStream o) {
 		out = o;
 		tempMap = new DefaultMap();
 	}
@@ -101,9 +101,9 @@ public class SOUT {
 		prExp(s.right, d + 1);
 		sayln(",");
 		indent(d + 1);
-		say(s.condTrue.toString());
+		say(s.iftrue.toString());
 		say(",");
-		say(s.condFalse.toString());
+		say(s.iffalse.toString());
 		say(")");
 	}
 
@@ -230,7 +230,7 @@ public class SOUT {
 		say(")");
 	}
 
-	void prExp(ExpAbstract e, int d) {
+	void prExp(Exp_ e, int d) {
 		if (e instanceof BINOP) {
 			prExp((BINOP) e, d);
 		} else if (e instanceof MEM) {
@@ -245,7 +245,9 @@ public class SOUT {
 			prExp((CONST) e, d);
 		} else if (e instanceof CALL) {
 			prExp((CALL) e, d);
-		} else if (e == null) {
+		}
+		//Aqui
+		else if (e == null) {
 			System.out.println();
 		} else {
 			System.out.println("IRTreeException AQ: " + e);
@@ -258,7 +260,7 @@ public class SOUT {
 		say("\n");
 	}
 
-	public void prExp(ExpAbstract e) {
+	public void prExp(Exp_ e) {
 		prExp(e, 0);
 		say("\n");
 	}

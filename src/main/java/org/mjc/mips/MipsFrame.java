@@ -17,7 +17,7 @@ import java.util.*;
 @NoArgsConstructor
 public class MipsFrame extends Frame {
 
-	// Registradores de MIPS
+	// MIPS registers
 	static final Temp ZERO = new Temp(); // zero reg
 	static final Temp AT = new Temp(); // reserved for assembler
 	static final Temp V0 = new Temp(); // function result
@@ -184,7 +184,7 @@ public class MipsFrame extends Frame {
 		return new SEQ(left, right);
 	}
 
-	private static MOVE MOVE(ExpAbstract d, ExpAbstract s) {
+	private static MOVE MOVE(Exp_ d, Exp_ s) {
 		return new MOVE(d, s);
 	}
 
@@ -253,7 +253,7 @@ public class MipsFrame extends Frame {
 		return V0;
 	}
 
-	public ExpAbstract externalCall(String s, List<ExpAbstract> args) {
+	public Exp_ externalCall(String s, List<Exp_> args) {
 
 		String func = s.intern();
 		Label l = labels.get(func);
@@ -265,7 +265,7 @@ public class MipsFrame extends Frame {
 
 		ExpList auxExprList = null;
 
-		for (ExpAbstract arg : args) {
+		for (Exp_ arg : args) {
 			auxExprList = new ExpList(arg, auxExprList);
 		}
 		return new CALL(new NAME(l), auxExprList);

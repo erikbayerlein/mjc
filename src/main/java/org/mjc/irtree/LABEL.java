@@ -13,11 +13,11 @@ import org.mjc.temp.Label;
 public class LABEL extends Stm {
 	public Label label;
 
-	public ExpList children() {
+	public ExpList kids() {
 		return null;
 	}
 
-	public Stm build(ExpList children) {
+	public Stm build(ExpList kids) {
 		return this;
 	}
 }

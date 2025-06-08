@@ -10,15 +10,14 @@ import org.mjc.exceptions.IRTreeException;
 @Data
 @Builder
 @AllArgsConstructor
-public class ESEQ extends ExpAbstract {
+public class ESEQ extends Exp_ {
 	public Stm stm;
-	public ExpAbstract exp;
+	public Exp_ exp;
 
-	public ExpList children() {
-		throw new IRTreeException("children() not applicable to ESEQ");
+	public ExpList kids() {
+		throw new IRTreeException("kids() not applicable to ESEQ");
 	}
-
-	public ExpAbstract build(ExpList children) {
+	public Exp_ build(ExpList kids) {
 		throw new IRTreeException("build() not applicable to ESEQ");
 	}
 }

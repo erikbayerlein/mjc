@@ -14,8 +14,7 @@ public class CombineMap implements TempMap {
 
 	public String tempMap(Temp t) {
 		String s = tmap1.tempMap(t);
-		if (s != null)
-			return s;
+		if (s != null) return s;
 		return tmap2.tempMap(t);
 	}
 
