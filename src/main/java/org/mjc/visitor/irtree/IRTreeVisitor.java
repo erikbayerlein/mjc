@@ -405,7 +405,6 @@ public class IRTreeVisitor implements Visitor<Exp> {
 
 		var ifStmt = new SEQ(condStmt, thenElseStmt);
 
-		// sera que precisa desse ESEQ? IDK you tell me
 		var ifESEQ = new ESEQ(new SEQ(ifStmt, new LABEL(endLabel)), null);
 		addExp(ifESEQ);
 		return new Exp(ifESEQ);
