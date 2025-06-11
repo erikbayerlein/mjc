@@ -105,24 +105,6 @@ class IRTreeVisitorTest {
 		);
 	}
 
-	private static Arguments createComplexNestedExpression() {
-		Node complexAst = new Plus(
-				new Plus(new IntegerLiteral(1),
-						new Minus(new IntegerLiteral(2), new IntegerLiteral(3))
-				),
-				new IntegerLiteral(4)
-		);
-
-		Exp complexIr = new Exp(new BINOP(BINOP.PLUS,
-				new BINOP(BINOP.PLUS, new CONST(1),
-						new BINOP(BINOP.MINUS, new CONST(2), new CONST(3))
-				),
-				new CONST(4)
-		));
-
-		return Arguments.of(complexAst, complexIr);
-	}
-
 	// Test Methods
 	@Test
 	@DisplayName("Should check a non empty list of expression")
