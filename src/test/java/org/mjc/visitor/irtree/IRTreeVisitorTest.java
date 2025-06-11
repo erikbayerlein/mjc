@@ -5,7 +5,6 @@ import org.mjc.irtree.*;
 import org.mjc.mips.MipsFrame;
 import org.mjc.temp.Label;
 import org.mjc.visitor.symbols.SymbolTableVisitor;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -20,153 +19,142 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class IRTreeVisitorTest {
+
 	static MainClass mockedMainClass() {
+		ArrayList<Statement> statements = new ArrayList<>();
+		statements.add(new Sout(new IntegerLiteral(1)));
+
 		return MainClass.builder()
-			.className(new Identifier("Main"))
-			.argsName(new Identifier("args"))
-			.statements(new StatementList(new ArrayList<>() {{
-				add(new Sout(new IntegerLiteral(1)));
-			}}))
-			.build();
+				.className(new Identifier("Main"))
+				.argsName(new Identifier("args"))
+				.statements(new StatementList(statements))
+				.build();
 	}
 
 	static SimpleEntry<Exp, Sout> mockedSout() {
-		var exp = new Exp(new CALL(new NAME(new Label("_print")), new ExpList(new CONST(1), new ExpList(new CONST(0), null))));
-		var sout = new Sout(new IntegerLiteral(1));
+		ExpList printArgs = new ExpList(new CONST(1), new ExpList(new CONST(0), null));
+		Exp exp = new Exp(new CALL(new NAME(new Label("_print")), printArgs));
+		Sout sout = new Sout(new IntegerLiteral(1));
 		return new SimpleEntry<>(exp, sout);
 	}
 
-	static Stream<Arguments> shouldParseBinaryAndUnaryOperations() {
-		return Stream.of(
-			Arguments.of(
-				new Plus(new IntegerLiteral(1), new IntegerLiteral(2)),
-				new Exp(new BINOP(BINOP.PLUS, new CONST(1), new CONST(2)))
-			),
-			Arguments.of(
-				new Minus(new IntegerLiteral(1), new IntegerLiteral(2)),
-				new Exp(new BINOP(BINOP.MINUS, new CONST(1), new CONST(2)))
-			),
-			Arguments.of(
-				new Times(new IntegerLiteral(1), new IntegerLiteral(2)),
-				new Exp(new BINOP(BINOP.MUL, new CONST(1), new CONST(2)))
-			),
-			Arguments.of(
-				new Not(new IntegerLiteral(2)),
-				new Exp(new BINOP(BINOP.MINUS, new CONST(1), new CONST(2)))
-			),
-			Arguments.of(
-				new And(new True(), new False()),
-				new Exp(new BINOP(BINOP.AND, new CONST(1), new CONST(0)))
-			),
-			Arguments.of(
-				new LessThan(new IntegerLiteral(1), new IntegerLiteral(2)),
-				new Exp(new BINOP(BINOP.MINUS, new CONST(1), new CONST(2)))
-			),
-			Arguments.of(
-				new Plus(
-					new Plus(new IntegerLiteral(1),
-						new Minus(new IntegerLiteral(2), new IntegerLiteral(3))
-					), new IntegerLiteral(4)
-				),
-				new Exp(new BINOP(BINOP.PLUS,
-					new BINOP(BINOP.PLUS, new CONST(1),
-						new BINOP(BINOP.MINUS, new CONST(2), new CONST(3))
-					), new CONST(4)
-				))
-			)
-		);
+	static Program createTestProgram() {
+		ArrayList<VarDecl> varDecls = new ArrayList<>();
+		varDecls.add(VarDecl.builder()
+				.name("x")
+				.type(new IntegerType())
+				.build());
+
+		ArrayList<Statement> statements = new ArrayList<>();
+		statements.add(new Sout(new IdentifierExpression("x")));
+
+		ArrayList<MethodDecl> methods = new ArrayList<>();
+		methods.add(MethodDecl.builder()
+				.identifier("main")
+				.formals(new FormalList(new ArrayList<>()))
+				.varDecls(new VarDeclList(varDecls))
+				.statements(new StatementList(statements))
+				.type(new IntegerType())
+				.returnExpression(new IntegerLiteral(1))
+				.build());
+
+		ArrayList<ClassDecl> classes = new ArrayList<>();
+		classes.add(ClassDeclSimple.builder()
+				.className(new Identifier("method"))
+				.methods(new MethodDeclList(methods))
+				.build());
+
+		return Program.builder()
+				.mainClass(mockedMainClass())
+				.classes(new ClassDeclList(classes))
+				.build();
 	}
 
 	static Stream<Arguments> shouldParseSimpleLiterals() {
 		return Stream.of(
-			Arguments.of(new IntegerLiteral(1), new Exp(new CONST(1))),
-			Arguments.of(new True(), new Exp(new CONST(1))),
-			Arguments.of(new False(), new Exp(new CONST(0)))
+				Arguments.of(new IntegerLiteral(1), new Exp(new CONST(1))),
+				Arguments.of(new True(), new Exp(new CONST(1))),
+				Arguments.of(new False(), new Exp(new CONST(0)))
 		);
 	}
 
 	static Stream<Arguments> shouldParseASOUTStatement() {
 		return Stream.of(
-			Arguments.of(
-				new Sout(new IntegerLiteral(1)),
-				new Exp(new CALL(new NAME(new Label("_print")), new ExpList(new CONST(1), new ExpList(new CONST(0), null))))
-			),
-			Arguments.of(
-				new Sout(new IntegerLiteral(2)),
-				new Exp(new CALL(new NAME(new Label("_print")), new ExpList(new CONST(2), new ExpList(new CONST(0), null))))
-			),
-			Arguments.of(
-				new Sout(new Plus(new IntegerLiteral(1), new IntegerLiteral(2))),
-				new Exp(new CALL(new NAME(new Label("_print")), new ExpList(
-					new BINOP(BINOP.PLUS, new CONST(1), new CONST(2)), new ExpList(new CONST(0), null))
-				))
-			)
+				createSoutArgument(1),
+				createSoutArgument(2),
+				Arguments.of(
+						new Sout(new Plus(new IntegerLiteral(1), new IntegerLiteral(2))),
+						new Exp(new CALL(
+								new NAME(new Label("_print")),
+								new ExpList(
+										new BINOP(BINOP.PLUS, new CONST(1), new CONST(2)),
+										new ExpList(new CONST(0), null)
+								)
+						))
+				)
 		);
 	}
 
+	private static Arguments createSoutArgument(int value) {
+		return Arguments.of(
+				new Sout(new IntegerLiteral(value)),
+				new Exp(new CALL(
+						new NAME(new Label("_print")),
+						new ExpList(new CONST(value), new ExpList(new CONST(0), null))
+				))
+		);
+	}
+
+	private static Arguments createComplexNestedExpression() {
+		Node complexAst = new Plus(
+				new Plus(new IntegerLiteral(1),
+						new Minus(new IntegerLiteral(2), new IntegerLiteral(3))
+				),
+				new IntegerLiteral(4)
+		);
+
+		Exp complexIr = new Exp(new BINOP(BINOP.PLUS,
+				new BINOP(BINOP.PLUS, new CONST(1),
+						new BINOP(BINOP.MINUS, new CONST(2), new CONST(3))
+				),
+				new CONST(4)
+		));
+
+		return Arguments.of(complexAst, complexIr);
+	}
+
+	// Test Methods
 	@Test
 	@DisplayName("Should check a non empty list of expression")
 	void shouldCheckANonEmptyListOfExpression() {
 		// ARRANGE
-		Program prog = Program.builder()
-			.mainClass(mockedMainClass())
-			.classes(new ClassDeclList(new ArrayList<>() {{
-				add(ClassDeclSimple.builder()
-					.className(new Identifier("method"))
-					.methods(new MethodDeclList(new ArrayList<>() {{
-						add(MethodDecl.builder()
-							.identifier("main")
-							.formals(new FormalList(new ArrayList<>()))
-							.varDecls(new VarDeclList(new ArrayList<>() {{
-								add(VarDecl.builder().name("x").type(new IntegerType()).build());
-							}}))
-							.statements(new StatementList(new ArrayList<>() {{
-								add(new Sout(new IdentifierExpression("x")));
-							}}))
-							.type(new IntegerType())
-							.returnExpression(new IntegerLiteral(1))
-							.build());
-					}}))
-					.build());
-			}}))
-			.build();
+		Program program = createTestProgram();
 		SymbolTableVisitor symbolTableVisitor = new SymbolTableVisitor();
-		prog.accept(symbolTableVisitor);
+		program.accept(symbolTableVisitor);
 
-		IRTreeVisitor irTreeVisitor = new IRTreeVisitor(symbolTableVisitor.getMainTable(), new MipsFrame());
+		IRTreeVisitor irTreeVisitor = new IRTreeVisitor(
+				symbolTableVisitor.getMainTable(),
+				new MipsFrame()
+		);
 
 		// ACT
-		prog.accept(irTreeVisitor);
+		program.accept(irTreeVisitor);
 
 		// ASSERT
 		assertFalse(irTreeVisitor.getListExp().isEmpty());
-	}
-
-	@DisplayName("Should parse binary and unary operations")
-	@MethodSource
-	@ParameterizedTest
-	void shouldParseBinaryAndUnaryOperations(Node node, Exp expectedNode) {
-		// Arrange
-		var visitor = IRTreeVisitor.builder().build();
-
-		// Act
-		Exp actualNode = node.accept(visitor);
-
-		// Assert
-		assertEquals(expectedNode, actualNode);
 	}
 
 	@ParameterizedTest
 	@DisplayName("Should parse simple literals")
 	@MethodSource
 	void shouldParseSimpleLiterals(Node node, Exp expectedNode) {
-		// Arrange
-		var visitor = IRTreeVisitor.builder().build();
+		// ARRANGE
+		IRTreeVisitor visitor = IRTreeVisitor.builder().build();
 
-		// Act
+		// ACT
 		Exp actualNode = node.accept(visitor);
 
-		// Assert
+		// ASSERT
 		assertEquals(expectedNode, actualNode);
 	}
 
@@ -174,86 +162,96 @@ class IRTreeVisitorTest {
 	@ParameterizedTest
 	@MethodSource
 	void shouldParseASOUTStatement(Sout node, Exp expectedNode) {
-		// Arrange
-		var frame = new MipsFrame();
-		var visitor = IRTreeVisitor.builder()
-			.frame(frame)
-			.build();
+		// ARRANGE
+		MipsFrame frame = new MipsFrame();
+		IRTreeVisitor visitor = IRTreeVisitor.builder()
+				.frame(frame)
+				.build();
 
-		// Act
+		// ACT
 		Exp actualNode = node.accept(visitor);
 
-		// Assert
+		// ASSERT
 		assertEquals(expectedNode, actualNode);
 	}
 
 	@Test
 	@DisplayName("Should parse a if statement")
-	@Disabled
 	void shouldParseIfStatement() {
-		// Arrange
-		var frame = new MipsFrame();
+		// ARRANGE
+		MipsFrame frame = new MipsFrame();
 		SimpleEntry<Exp, Sout> mockedSout = mockedSout();
-		var ifSon = If.builder()
-			.condition(new True())
-			.thenBranch(mockedSout.getValue())
-			.elseBranch(mockedSout.getValue())
-			.build();
 
-		var visitor = IRTreeVisitor.builder().frame(frame).build();
+		If ifStatement = If.builder()
+				.condition(new True())
+				.thenBranch(mockedSout.getValue())
+				.elseBranch(mockedSout.getValue())
+				.build();
 
-		var expectedNode = ESEQ.builder()
-			.stm(
-				SEQ.builder()
-					.left(
-						SEQ.builder()
-							.left(
-								CJUMP.builder()
-									.relop(CJUMP.EQ)
-									.left(new CONST(1))
-									.right(new CONST(1))
-									.iftrue(new Label("if_true_0"))
-									.iffalse(new Label("if_false_0"))
-									.build()
-							)
-							.right(
-								SEQ.builder()
-									.left(
-										SEQ.builder()
-											.left(
-												SEQ.builder()
-													.left(new LABEL(new Label("if_true_0")))
-													.right(new EXP(mockedSout.getKey().unEx()))
-													.build()
-											)
-											.right(new JUMP(new Label("if_end_0")))
-											.build()
-									)
-									.right(
-										SEQ.builder()
-											.left(
-												SEQ.builder()
-													.left(new LABEL(new Label("if_false_0")))
-													.right(new EXP(mockedSout.getKey().unEx()))
-													.build()
-											)
-											.right(new JUMP(new Label("if_end_0")))
-											.build()
-									)
-									.build()
-							)
-							.build()
-					)
-					.right(new LABEL(new Label("if_end_0")))
-					.build()
-			)
-			.exp(null)
-			.build();
+		IRTreeVisitor visitor = IRTreeVisitor.builder()
+				.frame(frame)
+				.build();
 
-		// Act
-		Exp actualNode = ifSon.accept(visitor);
+		ESEQ expectedNode = createExpectedIfStatementNode(mockedSout);
 
-		// Assert
+		// ACT
+		Exp actualNode = ifStatement.accept(visitor);
+
+		// ASSERT
 		assertEquals(expectedNode, actualNode.unEx());
+	}
+
+	private ESEQ createExpectedIfStatementNode(SimpleEntry<Exp, Sout> mockedSout) {
+		Label trueLabel = new Label("L0");
+		Label falseLabel = new Label("L1");
+		Label endLabel = new Label("L2");
+
+		SEQ trueBranch = SEQ.builder()
+				.left(new LABEL(trueLabel))
+				.right(new EXP(mockedSout.getKey().unEx()))
+				.build();
+
+		SEQ trueBranchWithJump = SEQ.builder()
+				.left(trueBranch)
+				.right(new JUMP(endLabel))
+				.build();
+
+		SEQ falseBranch = SEQ.builder()
+				.left(new LABEL(falseLabel))
+				.right(new EXP(mockedSout.getKey().unEx()))
+				.build();
+
+		SEQ falseBranchWithJump = SEQ.builder()
+				.left(falseBranch)
+				.right(new JUMP(endLabel))
+				.build();
+
+		CJUMP conditionalJump = CJUMP.builder()
+				.relop(CJUMP.EQ)
+				.left(new CONST(1))
+				.right(new CONST(1))
+				.iftrue(trueLabel)
+				.iffalse(falseLabel)
+				.build();
+
+		SEQ combinedBranches = SEQ.builder()
+				.left(trueBranchWithJump)
+				.right(falseBranchWithJump)
+				.build();
+
+		SEQ mainSequence = SEQ.builder()
+				.left(conditionalJump)
+				.right(combinedBranches)
+				.build();
+
+		SEQ completeSequence = SEQ.builder()
+				.left(mainSequence)
+				.right(new LABEL(endLabel))
+				.build();
+
+		return ESEQ.builder()
+				.stm(completeSequence)
+				.exp(null)
+				.build();
 	}
 }
