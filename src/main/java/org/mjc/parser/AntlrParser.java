@@ -9,6 +9,7 @@ import org.mjc.antlr.MiniJavaLexer;
 import org.mjc.antlr.MiniJavaParser;
 import org.mjc.ast.Program;
 import org.mjc.exceptions.LexicalOrSemanticAnalysisException;
+import org.mjc.mjc.ParserStrategy;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,7 +17,7 @@ import java.util.Optional;
 
 @Log4j2
 @NoArgsConstructor
-public class AntlrParser {
+public class AntlrParser implements ParserStrategy {
 	private final MiniJavaParser parser = new MiniJavaParser(null);
 
 	public Optional<Program> getProgram(InputStream stream) {
