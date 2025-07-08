@@ -2,6 +2,7 @@ package org.mjc.mjc;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.mjc.assem.InstrList;
 import org.mjc.ast.Program;
@@ -29,6 +30,7 @@ public class MjcCompiler {
     @Builder.Default
     private ParserStrategy parser = new AntlrParser();
     @Builder.Default
+    @Getter
     private SemanticAnalysisStrategy semanticAnalysis = new TypeCheckingVisitor();
 
     public boolean isLexicalAndSyntacticallyOk(InputStream stream) {

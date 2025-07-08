@@ -261,7 +261,7 @@ public class MipsFrame extends Frame {
 			l = new Label("_" + func);
 			labels.put(func, l);
 		}
-		args.addFirst(new CONST(0));
+		args.add(0,new CONST(0));
 
 		ExpList auxExprList = null;
 
@@ -331,7 +331,7 @@ public class MipsFrame extends Frame {
 		Access formal = formals.next();
 		Access actual = actuals.next();
 		assignFormals(formals, actuals, body);
-		body.addFirst(MOVE(formal.exp(TEMP(FP)), actual.exp(TEMP(FP))));
+		body.add(0, MOVE(formal.exp(TEMP(FP)), actual.exp(TEMP(FP))));
 	}
 
 	private void assignCallees(int i, List<Stm> body) {
@@ -339,7 +339,7 @@ public class MipsFrame extends Frame {
 			return;
 		Access a = allocLocal();
 		assignCallees(i + 1, body);
-		body.addFirst(MOVE(a.exp(TEMP(FP)), TEMP(calleeSaves[i])));
+		body.add(0, MOVE(a.exp(TEMP(FP)), TEMP(calleeSaves[i])));
 		body.add(MOVE(TEMP(calleeSaves[i]), a.exp(TEMP(FP))));
 	}
 

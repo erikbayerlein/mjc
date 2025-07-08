@@ -10,9 +10,11 @@ import lombok.EqualsAndHashCode;
 @Data
 @Builder
 public class Label {
-	private static int count;
+	private static int count = 0;
 	private String name;
-
+	public static void reset() {
+		count = 0;
+	}
 	public Label() {
 		this("L" + count++);
 	}

@@ -31,11 +31,9 @@ public class AssemOPER extends Instr {
 	public TempList use() {
 		return src;
 	}
-
 	public TempList def() {
 		return dst;
 	}
-
 	public Targets jumps() {
 		return jump;
 	}

@@ -46,141 +46,159 @@ public class MaximalMunchCodegen implements MipsCodegen {
 
 	private void emit(Instr instr) {
 		if (last != null) {
-			last = ilist.tail = new InstrList(instr, null);
+			last = last.tail = new InstrList(instr, null);
 		} else {
 			last = ilist = new InstrList(instr, null);
 		}
 	}
 
 	private TempList munchArgs(int i, ExpList args) {
-		ExpList temp = args;
-		TempList ret = null;
-
-		while (!(temp == null)) {
-			Temp temp_head = munchExp(temp.head);
-			ret = new TempList(temp_head, ret);
-			temp = temp.tail;
+		TempList res = null;
+		while (args != null) {
+			Temp arg = munchExp(args.head);
+			res = new TempList(arg, res); // reverse order
+			args = args.tail;
 		}
-
-		return ret;
+		return res;
 	}
 
-
 	public void munchStm(Stm stm) {
+		if (stm == null) {
+			throw new IllegalArgumentException("Stm passado para munchStm é nulo");
+		}
 		if (stm instanceof SEQ seq) {
-			munchStmSeq(seq);
+			munchStm(seq.left);
+			munchStm(seq.right);
 		} else if (stm instanceof MOVE move) {
 			munchStmMove(move.dst, move.src);
 		} else if (stm instanceof LABEL label) {
-			emit(
-				new AssemLABEL(label.label + ":\n", label.label)
-			);
+			emit(new AssemLABEL(label.label + ":", label.label));
 		} else if (stm instanceof JUMP jump) {
-			munchStmJUMP(jump);
+			NAME jname = ((NAME) jump.exp);
+			emit(new AssemOPER("j `j0", null, null, new LabelList(jname.label, null)));
 		} else if (stm instanceof CJUMP cjump) {
-			munchStmCJUMP(cjump);
-		} else if (stm instanceof EXP exp && (exp.exp instanceof CALL call)) {
-			Temp temp = munchExp(call.func);
-			TempList tempList = munchArgs(0, call.args);
-			NAME name = (NAME) (call.func);
-			emit(new AssemOPER("jump " + name.label + "\n", null, new TempList(temp, tempList)));
+			String relop = switch (cjump.relop) {
+				case CJUMP.EQ -> "beq";
+				case CJUMP.NE -> "bne";
+				case CJUMP.LT -> "blt";
+				case CJUMP.GE -> "bge";
+				default -> throw new RuntimeException("Unknown relop");
+			};
+			Temp l = munchExp(cjump.left);
+			Temp r = munchExp(cjump.right);
+			emit(new AssemOPER(relop + " `s0, `s1, `j0", null,
+					new TempList(l, new TempList(r, null)),
+					new LabelList(cjump.iftrue, new LabelList(cjump.iffalse, null))));
+		} else if (stm instanceof EXP exp) {
+			if (exp.exp instanceof CALL call) {
+				if (call.args != null && call.args.head != null) {
+					Temp arg = munchExp(call.args.head);
+					emit(new AssemMOVE("move $a0, `s0", frame.RV(), arg));
+				}
+				if (call.func instanceof NAME name) {
+					emit(new AssemOPER("jal " + name.label, null, null));
+				} else {
+					Temp f = munchExp(call.func);
+					emit(new AssemOPER("jalr `s0", null, new TempList(f, null)));
+				}
+			} else {
+				munchExp(exp.exp);
+			}
 		}
-
-	}
-
-	public void munchStmCJUMP(CJUMP cjump) {
-		String relop = switch (cjump.relop) {
-			case CJUMP.EQ -> "beq";
-			case CJUMP.GE -> "bge";
-			case CJUMP.LT -> "blt";
-			case CJUMP.NE -> "bne";
-			default -> "";
-		};
-		Temp l = munchExp(cjump.left);
-		Temp r = munchExp(cjump.right);
-		emit(new AssemOPER(relop + "`s0, `s1, `j0\n", null, new TempList(l, new TempList(r, null)),
-			new LabelList(cjump.iftrue, new LabelList(cjump.iffalse, null))));
-	}
-
-	private void munchStmJUMP(JUMP jump) {
-		NAME jname = ((NAME) jump.exp);
-		emit(new AssemOPER("jump `j0\n", null, null, new LabelList(jname.label, null)));
-	}
-
-	public void munchStmSeq(SEQ seq) {
-		munchStm(seq.left);
-		munchStm(seq.right);
 	}
 
 	public void munchStmMove(Exp_ dst, Exp_ src) {
-		if (dst instanceof MEM mem) {
-			munchStmMove(mem, src);
-		} else if (dst instanceof TEMP && src instanceof CALL call) {
-			Temp temp = munchExp(call.func);
-			TempList templist = munchArgs(0, ((CALL) src).args);
-			Label funcname = ((NAME) (call.func)).label;
-			emit(new AssemOPER("jump " + funcname.toString() + "\n", new TempList(temp, null), templist));
+		if (dst instanceof TEMP tdst) {
+			Temp d = tdst.temp;
+
+			if (src instanceof CONST c) {
+				emit(new AssemOPER("li `d0, " + c.value, new TempList(d, null), null));
+			} else if (src instanceof TEMP tsrc) {
+				emit(new AssemMOVE("move `d0, `s0", d, tsrc.temp));
+			} else if (src instanceof CALL call) {
+				TempList args = munchArgs(0, call.args);
+				if (call.func instanceof NAME name) {
+					emit(new AssemOPER("jal " + name.label, null, args));
+				} else {
+					Temp f = munchExp(call.func);
+					emit(new AssemOPER("jalr `s0", null, new TempList(f, args)));
+				}
+				emit(new AssemMOVE("move `d0, $v0", d, frame.RV()));
+			} else {
+				Temp s = munchExp(src);
+				emit(new AssemMOVE("move `d0, `s0", d, s));
+			}
+		} else if (dst instanceof MEM mem) {
+			Temp addr = munchExp(mem.exp);
+			Temp val = munchExp(src);
+			emit(new AssemOPER("sw `s0, 0(`s1)", null, new TempList(val, new TempList(addr, null))));
 		}
-
 	}
 
-	void munchStmMove(MEM dst, Exp_ src) {
-	}
-
-	Temp munchExp(Exp_ exp2) {
-		Temp temp_reg = new Temp();
-		return temp_reg;
+	Temp munchExp(Exp_ exp) {
+		if (exp == null) {
+			throw new IllegalArgumentException("Exp_ passado para munchExp é nulo");
+		}
+		if (exp instanceof CONST c) {
+			Temp r = new Temp();
+			emit(new AssemOPER("li `d0, " + c.value, new TempList(r, null), null));
+			return r;
+		} else if (exp instanceof TEMP t) {
+			return t.temp;
+		} else if (exp instanceof BINOP binop) {
+			return munchExpBinop(binop);
+		} else if (exp instanceof MEM mem) {
+			Temp addr = munchExp(mem.exp);
+			Temp r = new Temp();
+			emit(new AssemOPER("lw `d0, 0(`s0)", new TempList(r, null), new TempList(addr, null)));
+			return r;
+		} else if (exp instanceof CALL call) {
+			TempList args = munchArgs(0, call.args);
+			if (call.func instanceof NAME name) {
+				emit(new AssemOPER("jal " + name.label, null, args));
+			} else {
+				Temp f = munchExp(call.func);
+				emit(new AssemOPER("jalr `s0", null, new TempList(f, args)));
+			}
+			Temp r = new Temp();
+			emit(new AssemMOVE("move `d0, $v0", r, frame.RV()));
+			return r;
+		} else {
+			Temp r = new Temp();
+			emit(new AssemOPER("# unhandled expression", new TempList(r, null), null));
+			return r;
+		}
 	}
 
 	Temp munchExpCall(CALL call) {
-		Temp temp_reg = new Temp();
-		return temp_reg;
-	}
-
-	Temp munchExpMem(MEM mem) {
-		Temp temp_reg = new Temp();
-		return temp_reg;
+		Temp dst = new Temp();
+		TempList args = munchArgs(0, call.args);
+		if (call.func instanceof NAME name) {
+			emit(new AssemOPER("jal " + name.label, null, args));
+		} else {
+			Temp f = munchExp(call.func);
+			emit(new AssemOPER("jalr `s0", null, new TempList(f, args)));
+		}
+		emit(new AssemMOVE("move `d0, $v0", dst, frame.RV()));
+		return dst;
 	}
 
 	Temp munchExpBinop(BINOP binop) {
-		Temp temp_reg = new Temp();
-		TempList d = new TempList(temp_reg, null);
-		TempList munchTempList = new TempList(munchExp(binop.left), new TempList(munchExp(binop.right), null));
+		Temp left = munchExp(binop.left);
+		Temp right = munchExp(binop.right);
+		Temp r = new Temp();
+		TempList dst = new TempList(r, null);
+		TempList src = new TempList(left, new TempList(right, null));
 
-		switch (binop.binop) {
-			case BINOP.PLUS: {
-				if (binop.right instanceof CONST cons) {
-					emit(new AssemOPER("addi `d0, `s0," + cons.value + "\n", d, munchTempList));
-				} else if (binop.left instanceof CONST cons) {
-					emit(new AssemOPER("addi `d0, `s0," + cons.value + "\n", d, munchTempList));
-				} else {
-					emit(new AssemOPER("add `d0, `s0, `s1 \n", d, munchTempList));
-				}
-				break;
-			}
-			case BINOP.MINUS: {
-				if (binop.right instanceof CONST cons) {
-					emit(new AssemOPER("subi `d0, `s0," + cons.value + "\n", d, munchTempList));
-				} else if (binop.left instanceof CONST cons) {
-					emit(new AssemOPER("subi `d0, `s0," + cons.value + "\n", d, munchTempList));
-				} else {
-					emit(new AssemOPER("sub `d0, `s0, `s1 \n", d, munchTempList));
-				}
-				break;
-			}
-			case BINOP.MUL:
-				emit(new AssemOPER("mul `d0, `s0, `s1 \n", d, munchTempList));
-				break;
-			case BINOP.DIV:
-				emit(new AssemOPER("div `s0,`s1\nmflo `d0\n", d, munchTempList));
-				break;
-			default:
-				break;
-		}
-		return temp_reg;
-	}
+		String op = switch (binop.binop) {
+			case BINOP.PLUS -> "add";
+			case BINOP.MINUS -> "sub";
+			case BINOP.MUL -> "mul";
+			case BINOP.DIV -> "div";
+			default -> throw new RuntimeException("Unknown BINOP: " + binop.binop);
+		};
 
-	Temp munchExpTemp(TEMP temp) {
-		return temp.temp;
+		emit(new AssemOPER(op + " `d0, `s0, `s1", dst, src));
+		return r;
 	}
 }
