@@ -95,8 +95,11 @@
                             <version>1.18.38</version>
                         </path>
                     </annotationProcessorPaths>
-                    <source>21</source>
-                    <target>21</target>
+                    <source>20</source>
+                    <target>20</target>
+                    <compilerArgs>
+                        <arg>--enable-preview</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
 
@@ -106,6 +109,7 @@
                 <version>3.1.2</version>
                 <configuration>
                     <useModulePath>false</useModulePath>
+                    <argLine>--enable-preview</argLine>
                 </configuration>
             </plugin>
         </plugins>

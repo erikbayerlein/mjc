@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
@@ -106,6 +107,10 @@ class IRTreeVisitorTest {
 	}
 
 	// Test Methods
+	@BeforeEach
+	void resetLabels() {
+		Label.reset();
+	}
 	@Test
 	@DisplayName("Should check a non empty list of expression")
 	void shouldCheckANonEmptyListOfExpression() {
