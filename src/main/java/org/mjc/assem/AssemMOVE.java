@@ -23,11 +23,9 @@ public class AssemMOVE extends Instr {
 	public TempList use() {
 		return new TempList(src, null);
 	}
-
 	public TempList def() {
 		return new TempList(dst, null);
 	}
-
 	public Targets jumps() {
 		return null;
 	}

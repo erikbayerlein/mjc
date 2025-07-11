@@ -20,11 +20,9 @@ public class AssemLABEL extends Instr {
 	public TempList use() {
 		return null;
 	}
-
 	public TempList def() {
 		return null;
 	}
-
 	public Targets jumps() {
 		return null;
 	}
