@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface ParserStrategy {
 	Optional<Program> getProgram(InputStream stream);
 
-	boolean isSyntaxOk(InputStream stream);
+	boolean validateSyntax(InputStream stream);
 
 	Program getProgramOrThrow(InputStream stream) throws LexicalOrSemanticAnalysisException;
 }
